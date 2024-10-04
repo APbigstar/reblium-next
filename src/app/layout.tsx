@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import "../assets/styles/globals.css";
+import "../styles/globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ClientSessionProvider from "@/components/ClientSessionProvider";
 
 export const metadata: Metadata = {
   title: "Reblium",
@@ -13,7 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          <ClientSessionProvider>{children}</ClientSessionProvider>
+        </AuthProvider>
+      </body>
     </html>
   );
 }
