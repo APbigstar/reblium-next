@@ -36,7 +36,8 @@
 body {
   overflow: hidden;
   position: relative;
-  background-image: url("/images/brown_background.png");
+  /* background-image: url("/images/brown_background.png"); */
+  background-color: #161616;
 }
 
 :root {
@@ -74,6 +75,8 @@ html {
   display: flex;
   height: 35px;
   margin-left: 85px;
+  width: auto;
+  cursor: pointer;
 }
 
 .nav-user {

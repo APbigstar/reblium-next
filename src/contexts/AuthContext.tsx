@@ -19,6 +19,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
   const checkTokenValidity = useCallback(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -30,7 +37,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const payload = JSON.parse(atob(token.split('.')[1]));
       const expiration = payload.exp * 1000; // Convert to milliseconds
       if (Date.now() >= expiration) {
-        logout();
+        // logout();
+        console.log('Token expired');
       } else {
         setIsAuthenticated(true);
       }
@@ -41,10 +49,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = useCallback((token: string) => {
-    console.log('login', token);
     localStorage.setItem('token', token);
     setIsAuthenticated(true);
-    router.push('/dashboard');
+    router.push('/dashboard/discover');
   }, [router]);
 
   const logout = useCallback(() => {

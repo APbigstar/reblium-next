@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@arcware/webrtc-plugin": "^0.3.14",
     "bcryptjs": "^2.4.3",
     "crypto": "^1.0.1",
     "jsonwebtoken": "^9.0.2",

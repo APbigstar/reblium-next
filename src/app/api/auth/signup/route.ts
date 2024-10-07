@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
                     <p>Hello ${name},</p>
                     <p>Thank you for signing up for Reblium Cloud. To complete your registration, please click the button below to verify your email address:</p>
                     <div style="text-align: center; margin: 30px 0;">
-                        <a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 14px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 4px; font-size: 16px;">Verify Email</a>
+                        <a href="${verificationLink}" style="background-color: #00cdff; color: white; padding: 14px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 4px; font-size: 16px;">Verify Email</a>
                     </div>
                     <p>If the button above doesn't work, you can also copy and paste the following link into your browser:</p>
                     <p>${verificationLink}</p>

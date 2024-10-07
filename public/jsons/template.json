@@ -1,0 +1,159 @@
+{
+    "courses": [
+      {
+        "name": "Alex",
+        "image": "/images/templates/Alex.png",
+        "dhsFile": "/DHS_template/templates/Alex.DHS"
+      },
+      {
+        "name": "Xiao",
+        "image": "/images/templates/Xiao.png",
+        "dhsFile": "/DHS_template/templates/Xiao.DHS"
+      },
+      {
+        "name": "Nour",
+        "image": "/images/templates/Nour.png",
+        "dhsFile": "/DHS_template/templates/Nour.DHS"
+      },
+      {
+        "name": "Achaya",
+        "image": "/images/templates/Achaya.png",
+        "dhsFile": "/DHS_template/templates/Achaya.DHS"
+      },
+      {
+        "name": "Lu",
+        "image": "/images/templates/Lu.png",
+        "dhsFile": "/DHS_template/templates/Lu.DHS"
+      },
+      {
+        "name": "John",
+        "image": "/images/templates/John.png",
+        "dhsFile": "/DHS_template/templates/John.DHS"
+      },
+      {
+        "name": "Richard",
+        "image": "/images/templates/Richard.png",
+        "dhsFile": "/DHS_template/templates/Richard.DHS"
+      },
+      {
+        "name": "James",
+        "image": "/images/templates/James.png",
+        "dhsFile": "/DHS_template/templates/James.DHS"
+      },
+      {
+        "name": "African_female",
+        "image": "/images/templates/African_female.jpg",
+        "dhsFile": "/DHS_template/templates/African_female.DHS"
+      },
+      {
+        "name": "African_male",
+        "image": "/images/templates/African_male.jpg",
+        "dhsFile": "/DHS_template/templates/African_male.DHS"
+      },
+      {
+        "name": "Amfibian",
+        "image": "/images/templates/Amfibian.jpg",
+        "dhsFile": "/DHS_template/templates/Amfibian.DHS"
+      },
+      {
+        "name": "Asian_Female",
+        "image": "/images/templates/Asian_Female.jpg",
+        "dhsFile": "/DHS_template/templates/Asian_Female.DHS"
+      },
+      {
+        "name": "Asian_male",
+        "image": "/images/templates/Asian_male.jpg",
+        "dhsFile": "/DHS_template/templates/Asian_male.DHS"
+      },
+      {
+        "name": "Avatar",
+        "image": "/images/templates/Avatar.jpg",
+        "dhsFile": "/DHS_template/templates/Avatar.DHS"
+      },
+      {
+        "name": "Caucasian_female",
+        "image": "/images/templates/Caucasian_female.jpg",
+        "dhsFile": "/DHS_template/templates/Caucasian_female.DHS"
+      },
+      {
+        "name": "Caucasian_Male",
+        "image": "/images/templates/Caucasian_Male.jpg",
+        "dhsFile": "/DHS_template/templates/Caucasian_Male.DHS"
+      },
+      {
+        "name": "Cyberpunk_Female",
+        "image": "/images/templates/Cyberpunk_Female.jpg",
+        "dhsFile": "/DHS_template/templates/Cyberpunk_Female.DHS"
+      },
+      {
+        "name": "Cyberpunk_Male",
+        "image": "/images/templates/Cyberpunk_Male.jpg",
+        "dhsFile": "/DHS_template/templates/Cyberpunk_Male.DHS"
+      },
+      {
+        "name": "Dog",
+        "image": "/images/templates/Dog.jpg",
+        "dhsFile": "/DHS_template/templates/Dog.DHS"
+      },
+      {
+        "name": "Dragon",
+        "image": "/images/templates/Dragon.jpg",
+        "dhsFile": "/DHS_template/templates/Dragon.DHS"
+      },
+      {
+        "name": "Fantasy_Female",
+        "image": "/images/templates/Fantasy_Female.jpg",
+        "dhsFile": "/DHS_template/templates/Fantasy_Female.DHS"
+      },
+      {
+        "name": "Fantasy_Male",
+        "image": "/images/templates/Fantasy_Male.jpg",
+        "dhsFile": "/DHS_template/templates/Fantasy_Male.DHS"
+      },
+      {
+        "name": "Goat",
+        "image": "/images/templates/Goat.jpg",
+        "dhsFile": "/DHS_template/templates/Goat.DHS"
+      },
+      {
+        "name": "Hispanic_female",
+        "image": "/images/templates/Hispanic_female.jpg",
+        "dhsFile": "/DHS_template/templates/Hispanic_female.DHS"
+      },
+      {
+        "name": "Hispanic_male",
+        "image": "/images/templates/Hispanic_male.jpg",
+        "dhsFile": "/DHS_template/templates/Hispanic_male.DHS"
+      },
+      {
+        "name": "Ox",
+        "image": "/images/templates/Ox.jpg",
+        "dhsFile": "/DHS_template/templates/Ox.DHS"
+      },
+      {
+        "name": "Pig",
+        "image": "/images/templates/Pig.jpg",
+        "dhsFile": "/DHS_template/templates/Pig.DHS"
+      },
+      {
+        "name": "Rat",
+        "image": "/images/templates/Rat.jpg",
+        "dhsFile": "/DHS_template/templates/Rat.DHS"
+      },
+      {
+        "name": "Stylistic_Female",
+        "image": "/images/templates/Stylistic_Female.jpg",
+        "dhsFile": "/DHS_template/templates/Stylistic_Female.DHS"
+      },
+      {
+        "name": "Stylistic_Male",
+        "image": "/images/templates/Stylistic_Male.jpg",
+        "dhsFile": "/DHS_template/templates/Stylistic_Male.DHS"
+      },
+      {
+        "name": "Tiger",
+        "image": "/images/templates/Tiger.jpg",
+        "dhsFile": "/DHS_template/templates/Tiger.DHS"
+      }
+    ]
+  }

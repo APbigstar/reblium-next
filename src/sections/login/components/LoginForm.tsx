@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -12,6 +12,13 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
   const [loginMessage, setLoginMessage] = useState("");
   const router = useRouter();
   const { login } = useAuth();
+  const {isAuthenticated} = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard/discover');
+    }
+  }, [isAuthenticated, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +37,7 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
       if (response.ok) {
         setLoginMessage("Login successful!");
         localStorage.setItem("user_email", data.email);
+        localStorage.setItem("user_id", data.userId);
         login(data.token);
       } else {
         throw new Error(data.error || "Login failed");

@@ -1,0 +1,58 @@
+{
+    "courses": [
+      {
+        "name": "",
+        "image": "/images/discover/concierge.png",
+        "dhsFile": "/DHS_template/discovers/Clarissa - Virtual Concierge.DHS",
+        "alt": "Hotel Receptionist"
+      },
+      {
+        "name": "",
+        "image": "/images/discover/tutors.png",
+        "dhsFile": "/DHS_template/discovers/Edubot - Virtual Tutor.DHS",
+        "alt": "Hotel Receptionist"
+      },
+      {
+        "name": "",
+        "image": "/images/discover/guide.png",
+        "dhsFile": "/DHS_template/discovers/Mallie - Virtual Guide.DHS",
+        "alt": "Hotel Receptionist"
+      },
+      {
+        "name": "",
+        "image": "/images/discover/frontdesk.png",
+        "dhsFile": "/DHS_template/discovers/Reggie - frontdesk asistent.DHS",
+        "alt": "Hotel Receptionist"
+      },
+      {
+        "name": "",
+        "image": "/images/discover/hostess.png",
+        "dhsFile": "/DHS_template/discovers/Grace - Virtual Hostess.DHS",
+        "alt": "Hotel Receptionist"
+      },
+      {
+        "name": "",
+        "image": "/images/discover/Survey.png",
+        "dhsFile": "/DHS_template/discovers/Quest - VIrtual Survey interviewer.DHS",
+        "alt": "Hotel Receptionist"
+      },
+      {
+        "name": "",
+        "image": "/images/discover/Dutch.png",
+        "dhsFile": "/DHS_template/discovers/Maartje - Dutch teacher.DHS",
+        "alt": "Hotel Receptionist"
+      },
+      {
+        "name": "",
+        "image": "/images/discover/Spanish.png",
+        "dhsFile": "/DHS_template/discovers/Camila - Spanish teacher.DHS",
+        "alt": "Hotel Receptionist"
+      },
+      {
+        "name": "",
+        "image": "/images/discover/Japanese.png",
+        "dhsFile": "/DHS_template/discovers/Sora -  Japanese Language Teacher.DHS",
+        "alt": "Hotel Receptionist"
+      }
+    ]
+  }
