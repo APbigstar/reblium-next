@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthAndUser } from "@/hooks/useAuthAndUser";
 
 interface LoginFormProps {
   onForgotPassword: () => void;
@@ -11,8 +11,8 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [loginMessage, setLoginMessage] = useState("");
   const router = useRouter();
-  const { login } = useAuth();
-  const {isAuthenticated} = useAuth();
+  const { login } = useAuthAndUser();
+  const {isAuthenticated} = useAuthAndUser();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -38,6 +38,7 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
         setLoginMessage("Login successful!");
         localStorage.setItem("user_email", data.email);
         localStorage.setItem("user_id", data.userId);
+        console.log(data.userId);
         login(data.token);
       } else {
         throw new Error(data.error || "Login failed");

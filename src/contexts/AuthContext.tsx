@@ -57,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user_email');
+    localStorage.removeItem('user_id');
     setIsAuthenticated(false);
     router.push('/');
   }, [router]);

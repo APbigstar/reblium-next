@@ -58,7 +58,7 @@ html {
 }
 
 .navbar {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
@@ -354,20 +354,16 @@ html {
 
 .overlay-menu {
   position: absolute;
-  right: 0;
+  left: 0;
   z-index: 9999;
-  padding: 10px;
-  height: 100vh;
-  width: 300px;
+  padding: 20px;
+  height: calc(100vh - 39px);
   display: flex;
-  top: 39px;
   justify-content: center;
-  padding-top: 20px;
   background-color: #1e1e1e79;
 }
 
 .menu a {
-  display: block;
   font-size: 24px;
   font-weight: 400;
   padding-top: 10px;
@@ -3190,4 +3186,14 @@ input#welcomeMessage {
   color: #ffffff;
   resize: none;
   overflow-y: auto;
+}
+
+.main-content {
+  margin-left: 64px;
+  margin-top: 39px;
+  padding: 25px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: calc(100vw - 64px);
+  height: calc(100vh - 39px);
 }

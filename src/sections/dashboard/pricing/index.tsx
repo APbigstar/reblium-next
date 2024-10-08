@@ -6,7 +6,7 @@ import withAuth from '@/components/withAuth';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 
-export default withAuth(function DiscoverView() {
+export default withAuth(function PricingView() {
   const router = useRouter();
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export default withAuth(function DiscoverView() {
       <Navbar />
       <Sidebar />
       <div className="main-content">
-        <p className='text-white'>It's discover page</p>
+        <p className='text-white'>It's pricing page</p>
       </div>
     </>
   );

@@ -1,38 +1,35 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import React, { useEffect } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useUser } from "@/contexts/UserContext";
+import { useAuthAndUser } from "@/hooks/useAuthAndUser";
 
 const Navbar: React.FC = () => {
-  const router = useRouter();
-  const { userInfo, credits, subscription, loading } = useUser();
+  const { userInfo, credits, subscription, loading, isAuthenticated } =
+    useAuthAndUser();
 
   const DEV_ACCOUNT_ID = +(process.env.NEXT_PUBLIC_DEV_ACCOUNT_ID ?? 0);
 
-  console.log(DEV_ACCOUNT_ID);
-
   const getTierText = () => {
-    console.log(userInfo.id, DEV_ACCOUNT_ID);
-    if (loading) return "Loading...";
+    if (!isAuthenticated || loading) return "Loading...";
     if (userInfo?.id === DEV_ACCOUNT_ID) return "Dev";
     if (subscription?.exists) return "Premium";
     return "Free";
   };
 
   const getCreditsText = () => {
-    if (loading) return "Loading...";
+    if (!isAuthenticated || loading) return "Loading...";
     if (userInfo?.id === DEV_ACCOUNT_ID) return "Unlimited";
     return credits.toString();
   };
 
-  const toggleSection = (sectionId: string): void => {
-    // Implement section toggle logic
-    console.log(`Toggling section: ${sectionId}`);
-  };
-
-  if (loading) {
-    return <div>Loading...</div>;
+  if (!isAuthenticated) {
+    return <div>Please log in</div>;
   }
+
+  const toggleSection = (section: string) => {
+    console.log(section);
+  };
 
   return (
     <nav className="navbar">

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { debounce } from 'lodash';
 
 interface UserContextType {
   userInfo: any;
@@ -8,6 +9,7 @@ interface UserContextType {
   subscription: any;
   loading: boolean;
   refetchUserData: () => Promise<void>;
+  clearUserData: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -16,28 +18,26 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userInfo, setUserInfo] = useState<any>(null);
   const [credits, setCredits] = useState<number | string>(0);
   const [subscription, setSubscription] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const fetchPromiseRef = useRef<Promise<void> | null>(null);
 
-  const fetchedRef = useRef(false);
-
-  const fetchUserData = async () => {
-    if (fetchedRef.current) return; // Prevent double fetch
-    fetchedRef.current = true;
-
+  const fetchUserData = useCallback(async (): Promise<void> => {
     const userId = localStorage.getItem('user_id');
     if (!userId) {
       console.error("User ID not found in localStorage");
-      setLoading(false);
       return;
     }
 
-    try {
-      const [userResponse, creditsResponse, subscriptionResponse] = await Promise.all([
-        fetch(`/api/user?user_id=${userId}`),
-        fetch(`/api/credit?user_id=${userId}`),
-        fetch(`/api/premium?user_id=${userId}`)
-      ]);
+    if (fetchPromiseRef.current) {
+      return fetchPromiseRef.current;
+    }
 
+    setLoading(true);
+    fetchPromiseRef.current = Promise.all([
+      fetch(`/api/user?user_id=${userId}`),
+      fetch(`/api/credit?user_id=${userId}`),
+      fetch(`/api/premium?user_id=${userId}`)
+    ]).then(async ([userResponse, creditsResponse, subscriptionResponse]) => {
       const [userData, creditsData, subscriptionData] = await Promise.all([
         userResponse.json(),
         creditsResponse.json(),
@@ -47,24 +47,45 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserInfo(userData);
       setCredits(creditsData.amount || 0);
       setSubscription(subscriptionData);
-    } catch (error) {
+    }).catch(error => {
       console.error("Error fetching user data:", error);
-    } finally {
+    }).finally(() => {
       setLoading(false);
-    }
-  };
+      fetchPromiseRef.current = null;
+    });
 
-  useEffect(() => {
-    fetchUserData();
+    return fetchPromiseRef.current;
   }, []);
 
-  const refetchUserData = async () => {
-    setLoading(true);
-    await fetchUserData();
-  };
+  const debouncedFetchUserData = useCallback(
+    debounce(() => fetchUserData(), 300, { leading: true, trailing: false }),
+    [fetchUserData]
+  );
+
+  const refetchUserData = useCallback((): Promise<void> => {
+    if (!loading) {
+      return debouncedFetchUserData();
+    }
+    return Promise.resolve();
+  }, [debouncedFetchUserData, loading]);
+
+  const clearUserData = useCallback(() => {
+    setUserInfo(null);
+    setCredits(0);
+    setSubscription(null);
+    setLoading(false);
+    fetchPromiseRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    const userId = localStorage.getItem('user_id');
+    if (userId && !userInfo) {
+      refetchUserData();
+    }
+  }, [userInfo, refetchUserData]);
 
   return (
-    <UserContext.Provider value={{ userInfo, credits, subscription, loading, refetchUserData }}>
+    <UserContext.Provider value={{ userInfo, credits, subscription, loading, refetchUserData, clearUserData }}>
       {children}
     </UserContext.Provider>
   );

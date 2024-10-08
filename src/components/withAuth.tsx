@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../hooks/useAuth';
+import { useAuthAndUser } from '@/hooks/useAuthAndUser';
 
 const withAuth = <P extends object>(WrappedComponent: React.ComponentType<P>) => {
   return (props: P) => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated } = useAuthAndUser();
     const router = useRouter();
 
     useEffect(() => {
