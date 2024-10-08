@@ -37,7 +37,7 @@ body {
   overflow: hidden;
   position: relative;
   /* background-image: url("/images/brown_background.png"); */
-  background-color: #161616;
+  background-color: black;
 }
 
 :root {
@@ -60,9 +60,8 @@ html {
 .navbar {
   position: fixed;
   top: 0;
-  left: 0;
-  width: 100%;
-  background-color: rgba(0, 0, 0, 0.2); /* 20% black background */
+  left: 64px;
+  width: calc(100vw - 64px);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -72,17 +71,9 @@ html {
 }
 
 .nav-logo {
-  display: flex;
-  height: 35px;
-  margin-left: 85px;
-  width: auto;
-  cursor: pointer;
-}
-
-.nav-user {
-  display: flex;
-  align-items: center;
-  margin-right: 10px; /* Adjust this margin as needed */
+  position: absolute;
+  top: 42px;
+  right: 62px;
 }
 
 .username {
@@ -123,7 +114,7 @@ html {
   height: 35px;
   border-radius: 50%;
   object-fit: cover;
-  margin-right: 10px;
+  cursor: pointer;
 }
 
 #userEmail {
@@ -238,18 +229,6 @@ html {
   height: 100%;
 }
 
-.beta-text {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
-  color: white;
-  padding: 7px 15px;
-  border-radius: 5px;
-  font-size: 18px;
-  z-index: 99999999;
-}
-
 .background {
   position: absolute;
   background-color: #161616 !important;
@@ -353,14 +332,21 @@ html {
 }
 
 .overlay-menu {
-  position: absolute;
+  position: fixed;
   left: 0;
+  top: 0;
   z-index: 9999;
   padding: 20px;
-  height: calc(100vh - 39px);
+  height: 100vh;
+}
+
+.icon-menu {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  background-color: #1e1e1e79;
+  gap: 4px;
+  height: calc(100vh - 145px);
 }
 
 .menu a {
@@ -2903,7 +2889,7 @@ loader::after,
 .second-button-style {
   background: none;
   border: 1px solid var(--secondary-color);
-  color: black;
+  color: white;
 }
 
 .focus\:border-blue-500:focus {

@@ -51,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = useCallback((token: string) => {
     localStorage.setItem('token', token);
     setIsAuthenticated(true);
-    router.push('/dashboard/discover');
+    router.push('/profile');
   }, [router]);
 
   const logout = useCallback(() => {

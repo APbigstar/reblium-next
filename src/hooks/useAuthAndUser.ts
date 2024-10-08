@@ -1,6 +1,8 @@
-import { useContext, useEffect } from 'react';
-import { AuthContext } from '@/contexts/AuthContext';
-import { UserContext } from '@/contexts/UserContext';
+"use client";
+
+import { useContext, useEffect } from "react";
+import { AuthContext } from "@/contexts/AuthContext";
+import { UserContext } from "@/contexts/UserContext";
 
 export const useAuthAndUser = () => {
   const { isAuthenticated, login, logout } = useContext(AuthContext);

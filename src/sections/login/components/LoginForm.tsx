@@ -1,6 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthAndUser } from "@/hooks/useAuthAndUser";
+import IconInput from "./IconInput";
+
+import { MdEmail } from "react-icons/md";
+import { RiLockPasswordLine } from "react-icons/ri";
 
 interface LoginFormProps {
   onForgotPassword: () => void;
@@ -9,14 +13,15 @@ interface LoginFormProps {
 export default function LoginForm({ onForgotPassword }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
   const router = useRouter();
   const { login } = useAuthAndUser();
-  const {isAuthenticated} = useAuthAndUser();
+  const { isAuthenticated } = useAuthAndUser();
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard/discover');
+      router.push("/profile");
     }
   }, [isAuthenticated, router]);
 
@@ -50,52 +55,44 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
 
   return (
     <>
-      <h1 className="text-xl md:text-2xl font-bold leading-tight mt-12">
-        Log in to your account
+      <h1 className="text-xl md:text-3xl font-bold leading-tight mt-12 uppercase text-white text-center">
+        Enter your <br /> reblium account
       </h1>
       <form className="mt-6" onSubmit={handleLogin}>
-        <div>
-          <label htmlFor="email" className="block text-gray-700">
-            Email Address
-          </label>
+        <IconInput
+          type="email"
+          id="email"
+          value={email}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            setEmail(e.target.value)
+          }
+          placeholder="Enter Email Address"
+          icon={MdEmail}
+        />
+        <IconInput
+          type="password"
+          id="password"
+          value={password}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            setPassword(e.target.value)
+          }
+          placeholder="Enter Password"
+          icon={RiLockPasswordLine}
+        />
+        <div className="flex items-center mt-4">
           <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter Email Address"
-            className="w-full px-4 py-3 rounded-lg bg-gray-200 mt-2 border focus:border-blue-500 focus:bg-white focus:outline-none"
-            required
-            autoFocus
-            autoComplete="email"
+            type="checkbox"
+            id="remember-me"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="w-4 h-4 bg-blue-standard bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
           />
-        </div>
-        <div className="mt-4">
-          <label htmlFor="password" className="block text-gray-700">
-            Password
-          </label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter Password"
-            className="w-full px-4 py-3 rounded-lg bg-gray-200 mt-2 border focus:border-blue-500 focus:bg-white focus:outline-none"
-            required
-            autoComplete="current-password"
-          />
-        </div>
-        <div className="text-right mt-2">
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              onForgotPassword();
-            }}
-            className="text-sm font-semibold text-gray-700 hover:text-blue-700 focus:text-blue-700"
+          <label
+            htmlFor="remember-me"
+            className="ml-2 text-sm font-medium text-white"
           >
-            Forgot Password?
-          </a>
+            Remember me
+          </label>
         </div>
         <div className="flex items-center flex-col gap-2">
           <button
@@ -124,35 +121,17 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
           {loginMessage}
         </div>
       )}
-      <div className="mt-4 text-center text-xs text-gray-600">
-        By logging in, you agree to our{" "}
+      <div className="text-center mt-4">
         <a
-          href="https://www.reblium.com/privacy-policy"
-          className="text-blue-starndard"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            onForgotPassword();
+          }}
+          className="text-sm font-semibold text-gray-700 hover:text-blue-700 focus:text-blue-700 text-white"
         >
-          Privacy Policy
+          Forgot Password?
         </a>
-        ,{" "}
-        <a
-          href="https://www.termsfeed.com/live/ce41436e-bc47-4730-988d-d061c3de1774"
-          className="text-blue-starndard"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Terms and Conditions
-        </a>{" "}
-        and{" "}
-        <a
-          href="https://www.reblium.com/termsandconditions"
-          className="text-blue-starndard"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          End-User License Agreement
-        </a>
-        .
       </div>
     </>
   );

@@ -1,4 +1,4 @@
-import PricingView from "@/sections/dashboard/pricing";
+import PricingView from "@/sections/pricing";
 
 export const metadata = {
     title: "Pricing Page",
