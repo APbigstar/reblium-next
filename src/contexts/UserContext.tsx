@@ -1,23 +1,30 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useRef, useCallback } from 'react';
 import { debounce } from 'lodash';
 
 interface UserContextType {
-  userInfo: any;
+  userInfo: any | null;
   credits: number | string;
-  subscription: any;
+  subscription: any | null;
   loading: boolean;
   refetchUserData: () => Promise<void>;
   clearUserData: () => void;
 }
 
-const UserContext = createContext<UserContextType | undefined>(undefined);
+export const UserContext = createContext<UserContextType>({
+  userInfo: null,
+  credits: 0,
+  subscription: null,
+  loading: false,
+  refetchUserData: async () => {},
+  clearUserData: () => {},
+});
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [userInfo, setUserInfo] = useState<any>(null);
+  const [userInfo, setUserInfo] = useState<any | null>(null);
   const [credits, setCredits] = useState<number | string>(0);
-  const [subscription, setSubscription] = useState<any>(null);
+  const [subscription, setSubscription] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const fetchPromiseRef = useRef<Promise<void> | null>(null);
 
@@ -85,16 +92,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [userInfo, refetchUserData]);
 
   return (
-    <UserContext.Provider value={{ userInfo, credits, subscription, loading, refetchUserData, clearUserData }}>
+    <UserContext.Provider value={{
+      userInfo,
+      credits,
+      subscription,
+      loading,
+      refetchUserData,
+      clearUserData
+    }}>
       {children}
     </UserContext.Provider>
   );
-};
-
-export const useUser = () => {
-  const context = useContext(UserContext);
-  if (context === undefined) {
-    throw new Error('useUser must be used within a UserProvider');
-  }
-  return context;
 };
