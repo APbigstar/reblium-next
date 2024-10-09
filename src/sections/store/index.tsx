@@ -2,11 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import withAuth from "@/components/withAuth";
-import Navbar from "@/components/Navbar";
-import Sidebar from "@/components/Sidebar";
 
-export default withAuth(function StoreView() {
+export default function StoreView() {
   const router = useRouter();
 
   useEffect(() => {
@@ -17,4 +14,4 @@ export default withAuth(function StoreView() {
   }, [router]);
 
   return <p className="text-white">It's store page</p>;
-});
+};

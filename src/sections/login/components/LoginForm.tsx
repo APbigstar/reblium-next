@@ -1,6 +1,6 @@
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent, useContext } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthAndUser } from "@/hooks/useAuthAndUser";
+import { UserContext } from "@/contexts/UserContext";
 import IconInput from "./IconInput";
 
 import { MdEmail } from "react-icons/md";
@@ -16,8 +16,7 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
   const [rememberMe, setRememberMe] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
   const router = useRouter();
-  const { login } = useAuthAndUser();
-  const { isAuthenticated } = useAuthAndUser();
+  const { login, isAuthenticated } = useContext(UserContext);
 
   useEffect(() => {
     if (isAuthenticated) {

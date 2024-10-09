@@ -1,12 +1,12 @@
 'use client';
 
-import React from 'react';
-import { useAuthAndUser } from "@/hooks/useAuthAndUser";
+import React, { useContext } from 'react';
+import { UserContext } from "@/contexts/UserContext";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 
 export function ClientLayoutContent({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthAndUser();
+  const { isAuthenticated } = useContext(UserContext);
 
   if (!isAuthenticated) {
     return <>{children}</>;

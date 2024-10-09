@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from '@/utils/db';
-
-interface User {
-  id: number;
-  email: string;
-  is_verified: boolean;
-  verification_token: string | null;
-  verification_code: string | null;
-}
+import { User } from '@/types/type';
 
 export async function POST(req: NextRequest) {
   const { token, code } = await req.json() as { token?: string; code?: string };

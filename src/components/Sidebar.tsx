@@ -1,15 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { FaUser, FaBell, FaSearch, FaStore, FaDollarSign } from 'react-icons/fa';
 
-import { useAuthAndUser } from "@/hooks/useAuthAndUser";
+import { UserContext } from "@/contexts/UserContext";
 
 const Sidebar: React.FC = () => {
-  const { logout } = useAuthAndUser();
-  const { userInfo, isAuthenticated, loading, subscription } = useAuthAndUser();
+  const { userInfo, isAuthenticated, loading, subscription, logout } = useContext(UserContext);
 
   const [selected, setSelected] = useState<string>("profile");
 
@@ -24,7 +23,8 @@ const Sidebar: React.FC = () => {
 
   return (
     <div className="overlay-menu">
-      <div className="flex flex-col justify-center items-center gap-4">
+      <div className="flex flex-col justify-center items-center gap-2">
+        <p className="text-white">{userInfo?.name?.split(" ")[0]}</p>
         {userInfo?.profilePicture ? (
           <Image
             id="userImage"

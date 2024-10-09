@@ -2,7 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Open+Sans&display=swap");
+@font-face {
+  font-family: Futura;
+  src: url(/fonts/futura/Futura\ Bold\ font.ttf);
+}
+
+@font-face {
+  font-family: Montserrat;
+  src: url(/fonts/Montserrat/static/Montserrat-Regular.ttf);
+}
 
 * {
   margin: 0;
@@ -10,10 +18,6 @@
   font-family: "Montserrat", sans-serif;
 }
 
-@font-face {
-  font-family: Futura;
-  src: url(/fonts/futura/Futura\ Bold\ font.ttf);
-}
 
 ::-webkit-scrollbar {
   width: 5px;
@@ -346,7 +350,7 @@ html {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  height: calc(100vh - 145px);
+  height: calc(100vh - 250px);
 }
 
 .menu a {
@@ -3175,11 +3179,11 @@ input#welcomeMessage {
 }
 
 .main-content {
-  margin-left: 64px;
-  margin-top: 39px;
+  margin-left: 120px;
+  margin-top: 91px;
   padding: 25px;
   overflow-x: hidden;
   overflow-y: auto;
-  width: calc(100vw - 64px);
-  height: calc(100vh - 39px);
+  width: calc(100vw - 145px);
+  height: calc(100vh - 91px);
 }

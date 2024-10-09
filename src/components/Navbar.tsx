@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useContext } from "react";
 import Image from "next/image";
-import { useAuthAndUser } from "@/hooks/useAuthAndUser";
+import { UserContext } from "@/contexts/UserContext";
 
 const Navbar: React.FC = () => {
-  const { userInfo, credits, loading, isAuthenticated } = useAuthAndUser();
+  const { userInfo, credits, loading, isAuthenticated } = useContext(UserContext);
 
   const DEV_ACCOUNT_ID = +(process.env.NEXT_PUBLIC_DEV_ACCOUNT_ID ?? 0);
 
@@ -29,6 +29,7 @@ const Navbar: React.FC = () => {
         src="/images/white_logo.png"
         width={100}
         height={40}
+        priority
         className="nav-logo"
         alt="Icon"
       />

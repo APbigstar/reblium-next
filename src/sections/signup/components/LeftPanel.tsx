@@ -12,8 +12,9 @@ const LeftPanel: React.FC = () => {
           className="cursor-pointer"
           src="/images/white_logo.png"
           alt="logo"
-          width={95}
-          height={95}
+          width={100}
+          height={40}
+          priority
           onClick={() => window.location.href = '/demo'}
         />
       </div>

@@ -3,13 +3,6 @@ import GoogleProvider from 'next-auth/providers/google';
 import DiscordProvider from 'next-auth/providers/discord';
 import { query } from '@/utils/db';
 
-interface Profile {
-  id: string;
-  email: string;
-  name: string;
-  picture: string;
-}
-
 const handler = NextAuth({
   providers: [
     GoogleProvider({

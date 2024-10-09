@@ -2,11 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import withAuth from "@/components/withAuth";
-import Navbar from "@/components/Navbar";
-import Sidebar from "@/components/Sidebar";
 
-export default withAuth(function PricingView() {
+export default function PricingView() {
   const router = useRouter();
 
   useEffect(() => {
@@ -17,4 +14,4 @@ export default withAuth(function PricingView() {
   }, [router]);
 
   return <p className="text-white">It's pricing page</p>;
-});
+};

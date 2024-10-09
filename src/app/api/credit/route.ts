@@ -1,27 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from '@/utils/db';
-
-interface UserCredit {
-  amount: number;
-}
-
-interface UserPlan {
-  plan_id: number;
-  id: number;
-  created_at: string;
-}
+import { verifyToken } from '@/utils/verifyToken';
+import { UserPlan, UserCredit } from '@/types/type';
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const user_id = searchParams.get('user_id');
+    const userId = await verifyToken(req);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    if (!user_id) {
+    if (!userId) {
       return NextResponse.json({ error: "User ID is required" }, { status: 400 });
     }
 
     const checkUserExistingCredits = "SELECT amount FROM User_Credits WHERE user_id = ?";
-    const userCredits = await query<UserCredit[]>(checkUserExistingCredits, [user_id]);
+    const userCredits = await query<UserCredit[]>(checkUserExistingCredits, [userId]);
 
     const getCurrentUserPlan = `
       SELECT plan_id, id, created_at
@@ -31,7 +25,7 @@ export async function GET(req: NextRequest) {
         AND (status = 'open' OR status = 'active') 
         AND expires_at IS NULL
     `;
-    const userPlans = await query<UserPlan[]>(getCurrentUserPlan, [user_id]);
+    const userPlans = await query<UserPlan[]>(getCurrentUserPlan, [userId]);
 
     if (userCredits.length === 0) {
       return NextResponse.json({ exists: false });

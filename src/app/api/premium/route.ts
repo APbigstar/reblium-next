@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from '@/utils/db';
-
-interface UserPlan {
-  plan_id: number;
-  id: number;
-}
+import { verifyToken } from '@/utils/verifyToken';
+import { UserPlan } from '@/types/type';
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const user_id = searchParams.get('user_id');
-
-    if (!user_id) {
-      return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+    const userId = await verifyToken(req);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const getCurrentUserPlan = `
@@ -24,7 +19,7 @@ export async function GET(req: NextRequest) {
         AND expires_at IS NULL
     `;
     
-    const rows = await query<UserPlan[]>(getCurrentUserPlan, [user_id]);
+    const rows = await query<UserPlan[]>(getCurrentUserPlan, [userId]);
 
     if (rows.length === 0) {
       return NextResponse.json({ exists: false });

@@ -2,11 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import withAuth from "@/components/withAuth";
-import Navbar from "@/components/Navbar";
-import Sidebar from "@/components/Sidebar";
 
-export default withAuth(function SearchView() {
+export default function SearchView() {
   const router = useRouter();
 
   useEffect(() => {
@@ -17,4 +14,4 @@ export default withAuth(function SearchView() {
   }, [router]);
 
   return <p className="text-white">It's search page</p>;
-});
+};

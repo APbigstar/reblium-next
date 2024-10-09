@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from '@/utils/db';
 import transporter from '@/utils/emailTransporter';
-
-interface User {
-  id: number;
-  email: string;
-  name: string;
-}
+import { User } from '@/types/type';
 
 export async function POST(req: NextRequest) {
   try {

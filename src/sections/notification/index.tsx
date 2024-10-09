@@ -2,11 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import withAuth from "@/components/withAuth";
-import Navbar from "@/components/Navbar";
-import Sidebar from "@/components/Sidebar";
 
-export default withAuth(function NotificationView() {
+export default function NotificationView() {
   const router = useRouter();
 
   useEffect(() => {
@@ -16,5 +13,18 @@ export default withAuth(function NotificationView() {
     }
   }, [router]);
 
+  useEffect(() => {
+    async function fetchNotifications() {
+      const token = localStorage.getItem("token");
+      const response = await fetch('/api/user', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+    }
+
+    fetchNotifications();
+  }, []);
+
   return <p className="text-white">It's notification page</p>;
-});
+};

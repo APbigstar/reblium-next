@@ -1,34 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from '@/utils/db';
-
-interface User {
-  id: number;
-  email: string;
-  name: string;
-  is_verified: boolean;
-  profile_picture: string;
-  google_id: string | null;
-  facebook_id: string | null;
-  apple_id: string | null;
-  discord_id: string | null;
-  // We're not including password or sensitive fields like verification_token
-}
+import { verifyToken } from '@/utils/verifyToken';
+import { User } from '@/types/type';
 
 export async function GET(req: NextRequest) {
   try {
-    // Get the user_id from the query parameters
-    const { searchParams } = new URL(req.url);
-    const user_id = searchParams.get('user_id');
+    const userId = await verifyToken(req);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    if (!user_id) {
+    console.log("userId", userId);
+
+    if (!userId) {
       return NextResponse.json({ error: "User ID is required" }, { status: 400 });
     }
 
-    // Fetch user information from the database
     const users = await query<User[]>(
-      `SELECT id, email, name, is_verified, profile_picture, google_id, facebook_id, apple_id, discord_id 
+      `SELECT id, email, name, is_verified, profile_picture, google_id, facebook_id, apple_id, discord_id, bio 
        FROM Users WHERE id = ?`,
-      [user_id]
+      [userId]
     );
 
     if (users.length === 0) {
@@ -48,10 +39,50 @@ export async function GET(req: NextRequest) {
       facebookId: user.facebook_id,
       appleId: user.apple_id,
       discordId: user.discord_id,
+      bio: user.bio,
     });
 
   } catch (error) {
     console.error("Error fetching user information:", error);
     return NextResponse.json({ error: "Error processing the request" }, { status: 500 });
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const userId = await verifyToken(req);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { name, bio, profile_image } = await req.json();
+
+    // Create an object to store only the defined fields
+    const updatedFields: { [key: string]: string | null } = {};
+    if (name !== undefined) updatedFields.name = name;
+    if (bio !== undefined) updatedFields.bio = bio;
+    if (profile_image !== undefined) updatedFields.profile_image = profile_image;
+
+    // If no fields to update, return early
+    if (Object.keys(updatedFields).length === 0) {
+      return NextResponse.json({ message: 'No fields to update' });
+    }
+
+    // Construct the SQL query dynamically based on the fields to update
+    const fields = Object.keys(updatedFields);
+    const setClause = fields.map(field => `${field} = ?`).join(', ');
+    const values = fields.map(field => updatedFields[field] ?? null);
+
+    const sql = `UPDATE Users SET ${setClause} WHERE id = ?`;
+    values.push(userId.toString());
+
+    let result = await query(sql, values);
+
+    console.log("result", result);
+
+    return NextResponse.json({ message: 'User updated successfully', updatedUser: result });
+  } catch (error) {
+    console.error('Error updating user data:', error);
+    return NextResponse.json({ error: 'Error processing the request' }, { status: 500 });
   }
 }

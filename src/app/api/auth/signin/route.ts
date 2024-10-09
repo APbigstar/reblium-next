@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { query } from '@/utils/db';
-
-interface User {
-  id: number;
-  email: string;
-  password: string;
-  is_verified: boolean;
-}
+import { User } from '@/types/type';
 
 export async function POST(req: NextRequest) {
   if (!process.env.JWT_SECRET) {

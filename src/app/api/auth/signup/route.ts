@@ -3,11 +3,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { query } from '@/utils/db';
 import transporter from '@/utils/emailTransporter';
-
-interface User {
-  id: number;
-  email: string;
-}
+import { User } from '@/types/type';
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,8 +21,8 @@ export async function POST(req: NextRequest) {
     const verificationToken = crypto.randomBytes(20).toString('hex');
 
     await query(
-      'INSERT INTO Users (name, email, password, verification_token, is_verified) VALUES (?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, verificationToken, false]
+      'INSERT INTO Users (name, email, password, verification_token, is_verified, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, verificationToken, false, new Date().toISOString()]
     );
 
     const verificationLink = `${process.env.FRONTEND_URL}/verify?token=${verificationToken}`;
