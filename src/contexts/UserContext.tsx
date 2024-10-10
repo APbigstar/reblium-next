@@ -2,11 +2,12 @@
 
 import React, { createContext, useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, usePathname } from 'next/navigation';
+import { User, UserPlan } from "@/types/type";
 
 interface UserContextType {
-  userInfo: any | null;
+  userInfo: User | null;
   credits: number | string;
-  subscription: any | null;
+  subscription: UserPlan | null;
   loading: boolean;
   isAuthenticated: boolean;
   refetchUserData: () => Promise<void>;
@@ -28,9 +29,9 @@ export const UserContext = createContext<UserContextType>({
 });
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [userInfo, setUserInfo] = useState<any | null>(null);
+  const [userInfo, setUserInfo] = useState<User | null>(null);
   const [credits, setCredits] = useState<number | string>(0);
-  const [subscription, setSubscription] = useState<any | null>(null);
+  const [subscription, setSubscription] = useState<UserPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();

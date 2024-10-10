@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function PricingView() {
@@ -13,5 +13,5 @@ export default function PricingView() {
     }
   }, [router]);
 
-  return <p className="text-white">It's pricing page</p>;
-};
+  return <p className="text-white">It is pricing page</p>;
+}

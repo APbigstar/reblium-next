@@ -3,15 +3,13 @@ import { query } from '@/utils/db';
 import { verifyToken } from '@/utils/verifyToken';
 import { UserPlan, UserCredit } from '@/types/type';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const userId = await verifyToken(req);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!userId) {
-      return NextResponse.json({ error: "User ID is required" }, { status: 400 });
     }
 
     const checkUserExistingCredits = "SELECT amount FROM User_Credits WHERE user_id = ?";

@@ -12,6 +12,8 @@ const Sidebar: React.FC = () => {
   const { userInfo, isAuthenticated, loading, subscription, logout } = useContext(UserContext);
   const pathname = usePathname();
 
+  console.log(userInfo)
+
   const [selected, setSelected] = useState<string>(() => {
     // Initialize from localStorage if available, otherwise use "profile"
     if (typeof window !== 'undefined') {
@@ -37,7 +39,7 @@ const Sidebar: React.FC = () => {
   const getTierText = () => {
     if (!isAuthenticated || loading) return "Loading...";
     if (userInfo?.id === DEV_ACCOUNT_ID) return "Dev";
-    if (subscription?.exists) return "Premium";
+    if (subscription?.id === Number(process.env.NEXT_MONTHLY_PREMIUM_SUBSCRIPTION_ID) || subscription?.id === Number(process.env.NEXT_YEARLY_PREMIUM_SUBSCRIPTION_ID)) return "Premium";
     return "Free";
   };
 
@@ -45,10 +47,10 @@ const Sidebar: React.FC = () => {
     <div className="overlay-menu">
       <div className="flex flex-col justify-center items-center gap-2">
         <p className="text-white">{userInfo?.name?.split(" ")[0]}</p>
-        {userInfo?.profilePicture ? (
+        {userInfo?.profile_picture ? (
           <Image
             id="userImage"
-            src={`/images/Avatars${userInfo.profilePicture}`}
+            src={`/images/Avatars${userInfo.profile_picture}`}
             width={40}
             height={40}
             alt="User"

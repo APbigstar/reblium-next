@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function StoreWhatsNewView() {
@@ -13,5 +13,5 @@ export default function StoreWhatsNewView() {
     }
   }, [router]);
 
-  return <p className="text-white">It's store whats new page</p>;
+  return <p className="text-white">It is store whats new page</p>;
 };

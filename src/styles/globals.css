@@ -149,7 +149,7 @@ html {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 1000; /* Ensure it's above other content */
+  z-index: 1000; /* Ensure It is above other content */
   display: none; /* Hidden by default */
 }
 

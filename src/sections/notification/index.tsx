@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import {  useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function NotificationView() {
@@ -21,10 +21,11 @@ export default function NotificationView() {
           'Authorization': `Bearer ${token}`
         }
       });
+      console.log(response);
     }
 
     fetchNotifications();
   }, []);
 
-  return <p className="text-white">It's notification page</p>;
+  return <p className="text-white">It is notification page</p>;
 };

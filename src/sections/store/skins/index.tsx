@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import BackgroundMask from "../components/BackgroundMask";
 import ContentComponent from "../components/ContentComponent";
@@ -26,7 +26,7 @@ export default function StoreSkinsView() {
     },
     {
       name: "",
-        url: "/images/store/skins/3.png",
+      url: "/images/store/skins/3.png",
     },
     {
       name: "",
@@ -36,7 +36,11 @@ export default function StoreSkinsView() {
 
   return (
     <div className="h-full overflow-hidden">
-      <BackgroundMask url="/images/store/skins/bg.png" height="67%" maskWidth="30%" />
+      <BackgroundMask
+        url="/images/store/skins/bg.png"
+        height="67%"
+        maskWidth="30%"
+      />
       <div className="flex flex-col justify-around items-start h-full">
         <ContentComponent
           title="The Fabricant"
@@ -48,4 +52,4 @@ export default function StoreSkinsView() {
       </div>
     </div>
   );
-};
+}

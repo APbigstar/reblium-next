@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function StoreAssistantsView() {
@@ -13,5 +13,5 @@ export default function StoreAssistantsView() {
     }
   }, [router]);
 
-  return <p className="text-white">It's store assistants page</p>;
-};
+  return <p className="text-white">It is store assistants page</p>;
+}

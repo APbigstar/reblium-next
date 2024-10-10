@@ -40,7 +40,7 @@ const ProfileView: React.FC = () => {
       if (!response.ok) {
         throw new Error("Failed to fetch avatars");
       }
-      const data: Avatar[] = await response.json();
+      // const data: Avatar[] = await response.json();
       // setAvatars(data);
       setAvatars([
         {
@@ -181,10 +181,10 @@ const ProfileView: React.FC = () => {
       <h1 className="text-white text-4xl font-bold mb-8">My Profile</h1>
       <div className="w-full md:w-2/3 bg-gray-800 p-6 rounded-lg shadow-lg mb-4">
         <div className="profile_picture mb-4">
-          {userInfo.profilePicture ? (
+          {userInfo.profile_picture ? (
             <Image
               // src={`data:image/jpeg;base64,${userInfo.profile_picture}`}
-              src={`/images/Avatars${userInfo.profilePicture}`}
+              src={`/images/Avatars${userInfo.profile_picture}`}
               alt="Profile Avatar"
               width={200}
               height={200}

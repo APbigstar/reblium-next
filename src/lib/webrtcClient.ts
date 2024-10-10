@@ -11,7 +11,7 @@ type Command = Record<string, string>;
 
 interface PersonaData {
   Personas?: string;
-  [key: string]: any;
+  [key: string]: string | undefined;
 }
 
 class WebRTCManager {
@@ -192,7 +192,7 @@ class WebRTCManager {
   }
 
   public isWebRTCConnected(): boolean {
-    return !!(this.webRTCClient && (this.webRTCClient as any).socket?.ready());
+    return !!(this.webRTCClient && (this.webRTCClient as unknown as { socket?: { ready: () => boolean } }).socket?.ready());
   }
 
   private async reconnect(): Promise<boolean> {

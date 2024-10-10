@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import {useEffect } from "react";
 import { useRouter } from "next/navigation";
 import BackgroundMask from "../components/BackgroundMask";
 import ContentComponent from "../components/ContentComponent";

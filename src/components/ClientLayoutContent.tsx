@@ -12,9 +12,10 @@ export function ClientLayoutContent({
   children: React.ReactNode;
 }) {
   const { isAuthenticated, loading } = useContext(UserContext);
+  const pathname = usePathname();
+
   if (loading) return null;
 
-  const pathname = usePathname();
   const isAvatarRoute = pathname.includes("/avatarMode");
 
   if (!isAuthenticated || isAvatarRoute) {

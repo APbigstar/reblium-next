@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AvatarModeView() {
@@ -13,5 +13,5 @@ export default function AvatarModeView() {
     }
   }, [router]);
 
-  return <p className="text-white">It's avatar mode page</p>;
+  return <p className="text-white">It is avatar mode page</p>;
 };

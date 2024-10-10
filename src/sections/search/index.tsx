@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function SearchView() {
@@ -13,5 +13,5 @@ export default function SearchView() {
     }
   }, [router]);
 
-  return <p className="text-white">It's search page</p>;
+  return <p className="text-white">It is search page</p>;
 };

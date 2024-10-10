@@ -7,7 +7,10 @@ const pool = mysql.createPool({
   database: process.env.DB_DATABASE,
 });
 
-export async function query<T>(sql: string, params: any[]): Promise<T> {
+// Define a type for SQL query parameters
+type SqlParameter = string | number | boolean | null | Buffer | Date;
+
+export async function query<T>(sql: string, params: SqlParameter[]): Promise<T> {
   const [results] = await pool.execute(sql, params);
   return results as T;
 }

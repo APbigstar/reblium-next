@@ -3,6 +3,8 @@ import { query } from '@/utils/db';
 import { verifyToken } from '@/utils/verifyToken';
 import { UserPlan } from '@/types/type';
 
+export const dynamic = 'force-dynamic'; 
+
 export async function GET(req: NextRequest) {
   try {
     const userId = await verifyToken(req);

@@ -37,11 +37,11 @@ const VerificationLinkSent: React.FC<VerificationLinkSentProps> = ({ email, name
     <div className="flex flex-col justify-center">
       <h2 className="text-2xl font-semibold mb-8">Verify Your Email</h2>
       <p className="mb-4">
-        We've sent a verification link to your email. Please check your
+        We have sent a verification link to your email. Please check your
         inbox and click the link to verify your account.
       </p>
       <p className="mb-4">
-        Didn't receive the email? Check your spam folder or click the button
+        Did not receive the email? Check your spam folder or click the button
         below to receive a verification code instead.
       </p>
       <button

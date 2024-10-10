@@ -19,10 +19,6 @@ const Navbar: React.FC = () => {
     return <div>Please log in</div>;
   }
 
-  const toggleSection = (section: string) => {
-    console.log(section);
-  };
-
   return (
     <nav className="navbar">
       <Image

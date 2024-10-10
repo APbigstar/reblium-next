@@ -13,5 +13,6 @@ export async function verifyToken(req: NextRequest): Promise<number | null> {
     return decoded.userId;
   } catch (error) {
     return null;
+    console.log(error)
   }
 }

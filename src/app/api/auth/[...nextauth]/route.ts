@@ -1,9 +1,32 @@
-import NextAuth, { NextAuthOptions } from 'next-auth';
+import NextAuth, { DefaultSession, NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import DiscordProvider from 'next-auth/providers/discord';
 import { query } from '@/utils/db';
 
-const handler = NextAuth({
+// Extend the built-in session type
+interface ExtendedSession extends DefaultSession {
+  user?: {
+    id: string;
+  } & DefaultSession["user"]
+}
+
+// Define a type for the user profile
+interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  picture: string;
+}
+
+// Define a type for the database user
+interface DbUser {
+  id: number;
+  email: string;
+  name: string;
+  profile_picture: string;
+}
+
+const handler: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -38,28 +61,28 @@ const handler = NextAuth({
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }): Promise<ExtendedSession> {
       if (session.user) {
-        (session.user as any).id = token.id;
+        (session.user as ExtendedSession['user']).id = token.id as string;
       }
-      return session;
+      return session as ExtendedSession;
     },
   },
   pages: {
     signIn: '/',
     error: '/error',
   },
-});
+};
 
-export const GET = handler;
-export const POST = handler;
+export const GET = NextAuth(handler);
+export const POST = NextAuth(handler);
 
-async function socialLoginHandler(profile: any, provider: string) {
+async function socialLoginHandler(profile: UserProfile, provider: string): Promise<DbUser> {
   console.log('socialLoginHandler - Profile:', profile);
   console.log('socialLoginHandler - Provider:', provider);
   
   try {
-    const result = await query<any[]>('SELECT * FROM Users WHERE email = ?', [profile.email]);
+    const result = await query<DbUser[]>('SELECT * FROM Users WHERE email = ?', [profile.email]);
     console.log('Database query result:', result);
 
     if (!Array.isArray(result)) {
@@ -67,10 +90,10 @@ async function socialLoginHandler(profile: any, provider: string) {
       throw new Error('Unexpected database query result');
     }
 
-    const [existingUsers] = result;
+    const existingUsers = result;
     console.log('Existing users:', existingUsers);
 
-    let user;
+    let user: DbUser;
     if (existingUsers && existingUsers.length > 0) {
       user = existingUsers[0];
       // Update user logic...
@@ -80,14 +103,20 @@ async function socialLoginHandler(profile: any, provider: string) {
       );
     } else {
       // Insert new user logic...
-      const [insertResult] = await query<any>(
+      const insertResult = await query<{ insertId: number }>(
         `INSERT INTO Users (email, name, ${provider}_id, profile_picture, is_verified) VALUES (?, ?, ?, ?, 1)`,
         [profile.email, profile.name, profile.id, profile.picture]
       );
+      
+      if (!('insertId' in insertResult)) {
+        throw new Error('Insert operation did not return an insertId');
+      }
+
       user = {
         id: insertResult.insertId,
         email: profile.email,
         name: profile.name,
+        profile_picture: profile.picture,
       };
     }
 
