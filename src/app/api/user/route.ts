@@ -61,7 +61,7 @@ export async function PUT(req: NextRequest) {
     const updatedFields: { [key: string]: string | null } = {};
     if (name !== undefined) updatedFields.name = name;
     if (bio !== undefined) updatedFields.bio = bio;
-    if (profile_image !== undefined) updatedFields.profile_image = profile_image;
+    if (profile_image !== undefined) updatedFields.profile_picture = profile_image;
 
     // If no fields to update, return early
     if (Object.keys(updatedFields).length === 0) {

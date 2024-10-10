@@ -1,5 +1,3 @@
-// components/ProfileView.tsx
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useContext } from "react";
@@ -13,7 +11,6 @@ import { useCreateModeStore } from "@/store/createModeStore";
 const ProfileView: React.FC = () => {
   const router = useRouter();
   const { userInfo, loading, isAuthenticated, refetchUserData } = useContext(UserContext);
-  const { isCreateMode } = useCreateModeStore();
   const setCreateMode = useCreateModeStore((state) => state.setCreateMode);
   const [isEditingBio, setIsEditingBio] = useState<boolean>(false);
   const [localBio, setLocalBio] = useState<string>("");
@@ -28,6 +25,7 @@ const ProfileView: React.FC = () => {
   }, [userInfo]);
 
   const fetchAvatars = useCallback(async () => {
+    if (!isAuthenticated) return;
     setAvatarsLoading(true);
     try {
       const token = localStorage.getItem("token");
@@ -43,19 +41,71 @@ const ProfileView: React.FC = () => {
         throw new Error("Failed to fetch avatars");
       }
       const data: Avatar[] = await response.json();
-      setAvatars(data);
+      // setAvatars(data);
+      setAvatars([
+        {
+          id: 1,
+          name: "Avatar 1",
+          image: "avatar_1.png",
+          avatar: "avatar_1.png",
+          user_id: 1,
+          slider_value: "1",
+          prompt: "Avatar 1",
+          submission_time: "2024-02-20T12:00:00Z",
+        },
+        {
+          id: 2,
+          name: "Avatar 2",
+          image: "avatar_2.png",
+          avatar: "avatar_2.png",
+          user_id: 2,
+          slider_value: "1",
+          prompt: "Avatar 1",
+          submission_time: "2024-02-20T12:00:00Z",
+        },
+        {
+          id: 3,
+          name: "Avatar 3",
+          image: "avatar_3.png",
+          avatar: "avatar_3.png",
+          user_id: 2,
+          slider_value: "1",
+          prompt: "Avatar 1",
+          submission_time: "2024-02-20T12:00:00Z",
+        },
+        {
+          id: 4,
+          name: "Avatar 4",
+          image: "avatar_4.png",
+          avatar: "avatar_4.png",
+          user_id: 2,
+          slider_value: "1",
+          prompt: "Avatar 1",
+          submission_time: "2024-02-20T12:00:00Z",
+        },
+        {
+          id: 5,
+          name: "Avatar 5",
+          image: "avatar_5.png",
+          avatar: "avatar_5.png",
+          user_id: 2,
+          slider_value: "1",
+          prompt: "Avatar 1",
+          submission_time: "2024-02-20T12:00:00Z",
+        },
+      ]);
     } catch (err) {
       console.error("Error fetching avatars:", err);
     } finally {
       setAvatarsLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (avatarsLoading) {
       fetchAvatars();
     }
-  }, [fetchAvatars, avatarsLoading]);
+  }, [isAuthenticated, fetchAvatars, avatarsLoading]);
 
   const handleUpdateBio = async (newBio: string): Promise<void> => {
     setUpdating(true);
@@ -102,7 +152,7 @@ const ProfileView: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ profile_image: avatarImage })
+        body: JSON.stringify({ profile_image: `/${avatarImage}` })
       });
 
       if (!response.ok) {
@@ -127,13 +177,14 @@ const ProfileView: React.FC = () => {
   if (!userInfo) return <div>No user data available</div>;
 
   return (
-    <div>
+    <div className="p-[25px]">
       <h1 className="text-white text-4xl font-bold mb-8">My Profile</h1>
       <div className="w-full md:w-2/3 bg-gray-800 p-6 rounded-lg shadow-lg mb-4">
         <div className="profile_picture mb-4">
-          {userInfo.profile_image ? (
+          {userInfo.profilePicture ? (
             <Image
-              src={`data:image/jpeg;base64,${userInfo.profile_image}`}
+              // src={`data:image/jpeg;base64,${userInfo.profile_picture}`}
+              src={`/images/Avatars${userInfo.profilePicture}`}
               alt="Profile Avatar"
               width={200}
               height={200}
@@ -188,7 +239,7 @@ const ProfileView: React.FC = () => {
         {avatarsLoading ? (
           <div>Loading avatars...</div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
             {avatars.map((avatar) => (
               <AvatarCard
                 key={avatar.id}

@@ -4,12 +4,19 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { AvatarCardProps } from '@/types/type';
 
-const AvatarCard: React.FC<AvatarCardProps> = React.memo(({ avatar, onSetProfileAvatar }) => {
+const AvatarCard: React.FC<AvatarCardProps> = ({ avatar, onSetProfileAvatar }) => {
   const [isHovered, setIsHovered] = useState<boolean>(false);
 
-  const avatarSrc = avatar.image
-    ? `data:image/jpeg;base64,${avatar.image}`
+
+  // const avatarSrc = avatar.image
+  //   ? `data:image/jpeg;base64,${avatar.image}`
+  //   : "/images/default_avatar.png";
+
+
+  const avatarSrc = avatar.avatar
+    ? `/images/Avatars/${avatar.image}`
     : "/images/default_avatar.png";
+
 
   return (
     <div
@@ -18,7 +25,7 @@ const AvatarCard: React.FC<AvatarCardProps> = React.memo(({ avatar, onSetProfile
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="preset-avatar">
-        <div className="relative w-[100px] h-[100px]">
+        <div className="relative w-[180px] h-[180px]">
           <Image
             src={avatarSrc}
             alt={`Avatar ${avatar.id}`}
@@ -50,6 +57,6 @@ const AvatarCard: React.FC<AvatarCardProps> = React.memo(({ avatar, onSetProfile
       </div>
     </div>
   );
-});
+};
 
 export default AvatarCard;

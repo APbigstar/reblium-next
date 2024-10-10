@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, usePathname } from 'next/navigation';
 
 interface UserContextType {
@@ -36,6 +36,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const router = useRouter();
   const pathname = usePathname();
 
+  // Add this line to prevent double fetching
+  const initialFetchDone = useRef(false);
+
   const fetchUserData = useCallback(async (): Promise<void> => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -56,7 +59,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         creditsResponse.json(),
         subscriptionResponse.json(),
       ]);
-
+      console.log("Fetched user data:", userData);
       setUserInfo(userData);
       setCredits(creditsData.amount || 0);
       setSubscription(subscriptionData);
@@ -120,12 +123,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initialize = async () => {
+      if (initialFetchDone.current) return;
       setLoading(true);
       const isValid = checkTokenValidity();
       if (isValid) {
         await fetchUserData();
       }
       setLoading(false);
+      initialFetchDone.current = true;
     };
 
     initialize();

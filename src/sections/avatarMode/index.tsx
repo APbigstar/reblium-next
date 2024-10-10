@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export default function AvatarView() {
+export default function AvatarModeView() {
   const router = useRouter();
 
   useEffect(() => {
@@ -13,5 +13,5 @@ export default function AvatarView() {
     }
   }, [router]);
 
-  return <p className="text-white">It's avatar page</p>;
+  return <p className="text-white">It's avatar mode page</p>;
 };

@@ -1,9 +1,9 @@
-import AvatarView from "@/sections/avatar";
+import AvatarModeView from "@/sections/avatarMode";
 
 export const metadata = {
     title: "Avatar Page",
 }
 
 export default function Page() {
-    return <AvatarView />
+    return <AvatarModeView />
 }

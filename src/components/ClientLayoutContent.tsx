@@ -11,11 +11,11 @@ export function ClientLayoutContent({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated } = useContext(UserContext);
-  const pathname = usePathname();
+  const { isAuthenticated, loading } = useContext(UserContext);
+  if (loading) return null;
 
-  // Check if the current route includes "avatar/"
-  const isAvatarRoute = pathname.includes("/avatar");
+  const pathname = usePathname();
+  const isAvatarRoute = pathname.includes("/avatarMode");
 
   if (!isAuthenticated || isAvatarRoute) {
     return <>{children}</>;

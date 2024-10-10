@@ -3181,9 +3181,8 @@ input#welcomeMessage {
 .main-content {
   margin-left: 120px;
   margin-top: 91px;
-  padding: 25px;
   overflow-x: hidden;
   overflow-y: auto;
-  width: calc(100vw - 145px);
+  width: calc(100vw - 120px);
   height: calc(100vh - 91px);
 }
