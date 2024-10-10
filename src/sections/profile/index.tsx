@@ -7,9 +7,14 @@ import Image from "next/image";
 import { UserContext } from '@/contexts/UserContext';
 import AvatarCard from './components/AvatarCard';
 import { Avatar } from '@/types/type';
+import { useRouter } from "next/navigation";
+import { useCreateModeStore } from "@/store/createModeStore";
 
 const ProfileView: React.FC = () => {
+  const router = useRouter();
   const { userInfo, loading, isAuthenticated, refetchUserData } = useContext(UserContext);
+  const { isCreateMode } = useCreateModeStore();
+  const setCreateMode = useCreateModeStore((state) => state.setCreateMode);
   const [isEditingBio, setIsEditingBio] = useState<boolean>(false);
   const [localBio, setLocalBio] = useState<string>("");
   const [avatars, setAvatars] = useState<Avatar[]>([]);
@@ -112,6 +117,11 @@ const ProfileView: React.FC = () => {
     }
   };
 
+  const handleCreateNewAvatar = () => {
+    setCreateMode(true);
+    router.push("/avatar");
+  };
+
   if (loading) return <div>Loading...</div>;
   if (!isAuthenticated) return <div>Not authenticated</div>;
   if (!userInfo) return <div>No user data available</div>;
@@ -160,7 +170,7 @@ const ProfileView: React.FC = () => {
               <p className="text-gray-300">{localBio || "No bio set"}</p>
               <button
                 onClick={() => setIsEditingBio(true)}
-                className="bg-blue-500 text-white font-semibold rounded-lg px-4 py-2 mt-2 hover:bg-blue-600 transition duration-300"
+                className="bg-blue-standard text-white font-semibold rounded-lg px-4 py-2 mt-2 transition duration-300"
               >
                 Edit Bio
               </button>
@@ -169,11 +179,16 @@ const ProfileView: React.FC = () => {
         </div>
       </div>
       <div className="w-full bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h2 className="text-white text-2xl font-bold mb-4">My Avatars</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-white text-2xl font-bold mb-4">My Avatars</h2>
+          <button onClick={handleCreateNewAvatar} className="bg-blue-standard text-white font-semibold rounded-lg px-4 py-2 transition duration-300">
+            Create Avatar
+          </button>
+        </div>
         {avatarsLoading ? (
           <div>Loading avatars...</div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {avatars.map((avatar) => (
               <AvatarCard
                 key={avatar.id}
