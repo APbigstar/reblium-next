@@ -3,7 +3,6 @@ import { UserProvider } from "@/provider/UserContext";
 import { ClientLayoutContent } from "@/components/ClientLayoutContent";
 import { MembershipPlansProvider } from "@/provider/MembershipPlansProvider";
 import { UserMembershipPlansProvider } from "@/provider/UserMembershipPlansProvider";
-import theme from "@/theme";
 import "../styles/globals.css";
 
 export const metadata: Metadata = {

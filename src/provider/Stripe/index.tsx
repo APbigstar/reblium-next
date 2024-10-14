@@ -1,192 +1,258 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import {
-    Elements,
-    CardElement,
-    useElements,
-    useStripe as useOriginalStripe,
+  Elements,
+  CardElement,
+  useElements,
+  useStripe as useOriginalStripe,
 } from "@stripe/react-stripe-js";
 
 const loadStripePromise = () => {
-    const fn = async (resolve: any, reject: any) => {
-        try {
-            const result = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_API_KEY);
-            resolve(result);
-        } catch (e) {
-            console.warn(e);
-            setTimeout(fn, 100);
-        }
+  const fn = async (resolve: any, reject: any) => {
+    try {
+      const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLIC_API_KEY;
+      if (!publishableKey) {
+        throw new Error("Stripe publishable key is not set");
+      }
+      const result = await loadStripe(publishableKey);
+      resolve(result);
+    } catch (e) {
+      console.warn(e);
+      setTimeout(fn, 100);
     }
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            fn(resolve, reject);
-        }, 0);
-    });
-}
+  };
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      fn(resolve, reject);
+    }, 0);
+  });
+};
 
 const stripePromiseRef: any = {
-    current: null,
-}
+  current: null,
+};
 
 export default function Stripe(props: any) {
-    if (!stripePromiseRef.current) {
-        stripePromiseRef.current = loadStripePromise();
-    }
-    return (
-        <Elements stripe={stripePromiseRef.current} {...props} />
-    )
+  if (!stripePromiseRef.current) {
+    stripePromiseRef.current = loadStripePromise();
+  }
+  return <Elements stripe={stripePromiseRef.current} {...props} />;
 }
 
 function useStaticCallback(callback: any, depends: any) {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const _Callback = useCallback(callback, depends);
-    const _CallbackRef = useRef(_Callback);
-    _CallbackRef.current = _Callback;
-    return useCallback((...args: any) => _CallbackRef.current(...args), [_CallbackRef]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const _Callback = useCallback(callback, depends);
+  const _CallbackRef = useRef(_Callback);
+  _CallbackRef.current = _Callback;
+  return useCallback(
+    (...args: any) => _CallbackRef.current(...args),
+    [_CallbackRef]
+  );
 }
 
 export function useStripe() {
-    const stripe: any = useOriginalStripe();
-    const elements = useElements();
-    const getElement = useStaticCallback((ElementNode: any) => new Promise((resolve, reject) => {
+  const stripe: any = useOriginalStripe();
+  const elements = useElements();
+  const getElement = useStaticCallback(
+    (ElementNode: any) =>
+      new Promise((resolve, reject) => {
         if (!stripe || !elements) {
-            setTimeout(() => {
-                getElement(ElementNode).then(resolve).catch(reject);
-            }, 100);
-            return;
+          setTimeout(() => {
+            getElement(ElementNode).then(resolve).catch(reject);
+          }, 100);
+          return;
         }
         resolve(elements.getElement(ElementNode));
-    }), [stripe, elements]);
+      }),
+    [stripe, elements]
+  );
 
-    const getCardElement = useStaticCallback(() => getElement(CardElement), [getElement]);
+  const getCardElement = useStaticCallback(
+    () => getElement(CardElement),
+    [getElement]
+  );
 
-    const createPaymentMethod = useStaticCallback((billing_details: any) => (async () => {
+  const createPaymentMethod = useStaticCallback(
+    (billing_details: any) =>
+      (async () => {
         const cardElement = await getCardElement();
         if (!cardElement) {
-            return null;
+          return null;
         }
-        const { paymentMethod, error, ...others } = await stripe.createPaymentMethod({
-            type: 'card',
+        const { paymentMethod, error, ...others } =
+          await stripe.createPaymentMethod({
+            type: "card",
             card: cardElement,
             ...(() => {
-                if (!billing_details) {
-                    return {}
-                }
-                return {
-                    billing_details
-                }
-            })()
-        });
+              if (!billing_details) {
+                return {};
+              }
+              return {
+                billing_details,
+              };
+            })(),
+          });
         if (error) {
-            console.log('[error]', error);
+          console.log("[error]", error);
         } else {
-            console.log('[PaymentMethod]', paymentMethod);
+          console.log("[PaymentMethod]", paymentMethod);
         }
         return {
-            paymentMethod, error, ...others
+          paymentMethod,
+          error,
+          ...others,
         };
-    })(), [stripe, getCardElement]);
+      })(),
+    [stripe, getCardElement]
+  );
 
-    const confirmCardPayment = useStaticCallback((clientSecret: any, data: any) => new Promise((resolve, reject) => {
+  const confirmCardPayment = useStaticCallback(
+    (clientSecret: any, data: any) =>
+      new Promise((resolve, reject) => {
         if (!stripe) {
-            setTimeout(() => {
-                confirmCardPayment(clientSecret, data).then(resolve).catch(reject);
-            }, 100);
-            return;
+          setTimeout(() => {
+            confirmCardPayment(clientSecret, data).then(resolve).catch(reject);
+          }, 100);
+          return;
         }
-        stripe.confirmCardPayment(clientSecret, data).then(resolve).catch(reject);
-    }), [stripe]);
+        stripe
+          .confirmCardPayment(clientSecret, data)
+          .then(resolve)
+          .catch(reject);
+      }),
+    [stripe]
+  );
 
-    const confirmCardPaymentWithCardElement = useStaticCallback((clientSecret: any, data: any, ...params: any) => (async () => {
+  const confirmCardPaymentWithCardElement = useStaticCallback(
+    (clientSecret: any, data: any, ...params: any) =>
+      (async () => {
         const cardElement = await getCardElement();
         if (!cardElement) {
-            return null;
+          return null;
         }
         const { payment_method, return_url, ...rest } = data;
-        const result = await confirmCardPayment(clientSecret, {
+        const result = await confirmCardPayment(
+          clientSecret,
+          {
             payment_method: {
-                card: cardElement,
-                ...(() => {
-                    if (!payment_method) {
-                        return {};
-                    }
-                    const { billing_details, ...other } = payment_method;
-                    return !billing_details ? other : payment_method;
-                })(),
+              card: cardElement,
+              ...(() => {
+                if (!payment_method) {
+                  return {};
+                }
+                const { billing_details, ...other } = payment_method;
+                return !billing_details ? other : payment_method;
+              })(),
             },
-            ...(() => !return_url ? {} : { return_url })(),
-            ...rest
-        }, ...params);
+            ...(() => (!return_url ? {} : { return_url }))(),
+            ...rest,
+          },
+          ...params
+        );
         return result;
-    })(), [confirmCardPayment, getCardElement]);
+      })(),
+    [confirmCardPayment, getCardElement]
+  );
 
-    const retrievePaymentIntent = useStaticCallback((client_secret: any) => stripe.retrievePaymentIntent(client_secret), [stripe]);
-    const paymentRequest = useStaticCallback((options: any) => new Promise((resolve, reject) => {
+  const retrievePaymentIntent = useStaticCallback(
+    (client_secret: any) => stripe.retrievePaymentIntent(client_secret),
+    [stripe]
+  );
+  const paymentRequest = useStaticCallback(
+    (options: any) =>
+      new Promise((resolve, reject) => {
         if (stripe) {
-            resolve(stripe.paymentRequest(options));
-            return;
+          resolve(stripe.paymentRequest(options));
+          return;
         }
         setTimeout(() => {
-            paymentRequest(options).then(resolve).catch(reject);
+          paymentRequest(options).then(resolve).catch(reject);
         }, 100);
-    }), [stripe]);
+      }),
+    [stripe]
+  );
 
-    const retrieveSetupIntent = useStaticCallback((setupIntentClientSecret: any) => new Promise((resolve, reject) => {
+  const retrieveSetupIntent = useStaticCallback(
+    (setupIntentClientSecret: any) =>
+      new Promise((resolve, reject) => {
         if (!stripe) {
-            setTimeout(() => {
-                retrieveSetupIntent(setupIntentClientSecret).then(resolve).catch(reject);
-            }, 100);
-            return;
+          setTimeout(() => {
+            retrieveSetupIntent(setupIntentClientSecret)
+              .then(resolve)
+              .catch(reject);
+          }, 100);
+          return;
         }
-        stripe.retrieveSetupIntent(setupIntentClientSecret).then(resolve).catch(reject);
-    }), [stripe]);
+        stripe
+          .retrieveSetupIntent(setupIntentClientSecret)
+          .then(resolve)
+          .catch(reject);
+      }),
+    [stripe]
+  );
 
-
-    const confirmCardSetup = useStaticCallback((setupIntentClientSecret: any, data: any) => new Promise((resolve, reject) => {
+  const confirmCardSetup = useStaticCallback(
+    (setupIntentClientSecret: any, data: any) =>
+      new Promise((resolve, reject) => {
         if (!stripe) {
-            setTimeout(() => {
-                confirmCardSetup(setupIntentClientSecret, data).then(resolve).catch(reject);
-            }, 100);
-            return;
+          setTimeout(() => {
+            confirmCardSetup(setupIntentClientSecret, data)
+              .then(resolve)
+              .catch(reject);
+          }, 100);
+          return;
         }
-        stripe.confirmCardSetup(setupIntentClientSecret, data).then(resolve).catch(reject);
-    }), [stripe]);
+        stripe
+          .confirmCardSetup(setupIntentClientSecret, data)
+          .then(resolve)
+          .catch(reject);
+      }),
+    [stripe]
+  );
 
-    const confirmCardSetupWithCardElement = useStaticCallback((setupIntentClientSecret: any, data: any, ...params: any) => (async () => {
+  const confirmCardSetupWithCardElement = useStaticCallback(
+    (setupIntentClientSecret: any, data: any, ...params: any) =>
+      (async () => {
         const cardElement = await getCardElement();
         if (!cardElement) {
-            return null;
+          return null;
         }
         const { payment_method, return_url, ...rest } = data;
-        const result = await confirmCardSetup(setupIntentClientSecret, {
+        const result = await confirmCardSetup(
+          setupIntentClientSecret,
+          {
             payment_method: {
-                card: cardElement,
-                ...(() => {
-                    if (!payment_method) {
-                        return {};
-                    }
-                    const { billing_details, ...other } = payment_method;
-                    return !billing_details ? other : payment_method;
-                })(),
+              card: cardElement,
+              ...(() => {
+                if (!payment_method) {
+                  return {};
+                }
+                const { billing_details, ...other } = payment_method;
+                return !billing_details ? other : payment_method;
+              })(),
             },
-            ...(() => !return_url ? {} : { return_url })(),
-            ...rest
-        }, ...params);
+            ...(() => (!return_url ? {} : { return_url }))(),
+            ...rest,
+          },
+          ...params
+        );
         return result;
-    })(), [confirmCardSetup, getCardElement]);
+      })(),
+    [confirmCardSetup, getCardElement]
+  );
 
-    return {
-        stripe,
-        elements,
-        getElement,
-        getCardElement,
-        createPaymentMethod,
-        confirmCardPayment,
-        confirmCardPaymentWithCardElement,
-        retrievePaymentIntent,
-        paymentRequest,
-        retrieveSetupIntent,
-        confirmCardSetup,
-        confirmCardSetupWithCardElement,
-    };
+  return {
+    stripe,
+    elements,
+    getElement,
+    getCardElement,
+    createPaymentMethod,
+    confirmCardPayment,
+    confirmCardPaymentWithCardElement,
+    retrievePaymentIntent,
+    paymentRequest,
+    retrieveSetupIntent,
+    confirmCardSetup,
+    confirmCardSetupWithCardElement,
+  };
 }

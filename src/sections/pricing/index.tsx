@@ -8,6 +8,8 @@ import usePayStripeCardPayment from "@/hooks/use-pay-stripe-card-payment";
 import { useCancelUserMembershipPlan } from "@/provider/UserMembershipPlansProvider";
 import { UserContext } from "@/provider/UserContext";
 import { FaStar } from "react-icons/fa";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const UIComponent = () => {
   const router = useRouter();
@@ -37,6 +39,36 @@ const UIComponent = () => {
   const handleStartNow = () => {
     setShowCardElement(true);
   };
+
+  async function updateCreditAmount() {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found");
+      const response = await fetch("/api/credit", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          amount: 100,
+          premium: "premium",
+        }),
+      });
+
+      const res = await response.json();
+
+      console.log('Update Status', res)
+
+      if (res.success) {
+        refetchUserData();
+      } else {
+        console.error("Failed to update credit amount:", res.error);
+      }
+    } catch (error) {
+      console.error("Error updating credit amount:", error);
+    }
+  }
 
   const handlePremiumPay = async () => {
     try {
@@ -102,7 +134,7 @@ const UIComponent = () => {
         } else {
           setCardPaymentState({ errorMessage: "Payment successful!" });
           setShowCardElement(false);
-          await refetchUserData();
+          await updateCreditAmount()
         }
       }
     } catch (error) {
@@ -113,10 +145,10 @@ const UIComponent = () => {
   const handleCancelPremium = async () => {
     try {
       await cancelUserMembershipPlan(subscription?.id);
-      alert("Subscription cancelled successfully");
+      toast.success("Subscription cancelled successfully");
       await refetchUserData();
     } catch (error) {
-      console.error("Error canceling subscription", error);
+      toast.success("Subscription cancelled successfully");
       alert("Failed to cancel subscription");
     }
   };
@@ -301,6 +333,12 @@ const UIComponent = () => {
           </tbody>
         </table>
       </div>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+      />
     </div>
   );
 };
