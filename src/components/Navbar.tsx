@@ -2,7 +2,7 @@
 
 import React, { useContext } from "react";
 import Image from "next/image";
-import { UserContext } from "@/contexts/UserContext";
+import { UserContext } from "@/provider/UserContext";
 
 const Navbar: React.FC = () => {
   const { userInfo, credits, loading, isAuthenticated } = useContext(UserContext);

@@ -1,4 +1,4 @@
-export interface Avatar {
+export type Avatar = {
   id: number;
   name: string;
   image: string;
@@ -9,12 +9,12 @@ export interface Avatar {
   submission_time: string;
 }
 
-export interface AvatarCardProps {
+export type AvatarCardProps = {
   avatar: Avatar;
   onSetProfileAvatar: (avatarImage: string) => Promise<void>;
 }
 
-export interface User {
+export type User = {
   id: number;
   email: string;
   name: string;
@@ -31,12 +31,38 @@ export interface User {
   verification_code_expires: string;
 }
 
-export interface UserCredit {
+export type UserCredit = {
   amount: number;
+  premium_status: string;
 }
 
-export interface UserPlan {
-  plan_id: number;
+export type UserPlan = {
   id: number;
+  plan_id: number;
+  provider_id: string;
+  status: string;
+  complete: number;
+  is_active: number;
+  user_id: number;
+  created_at: string;
+  expires_at: string;
+  exists: boolean;
+}
+
+export type StripeCustomer = {
+  id: number;
+  customer_id: string;
+  user_id: number;
+  created_at: string
+}
+
+export type Plan = {
+  id: number;
+  billing_period: string;
+  is_active: number;
+  price: number;
+  product_id: string;
+  type: string;
+  mode: string;
   created_at: string;
 }

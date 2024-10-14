@@ -1,6 +1,6 @@
 import { useState, useEffect, ChangeEvent, useContext } from "react";
 import { useRouter } from "next/navigation";
-import { UserContext } from "@/contexts/UserContext";
+import { UserContext } from "@/provider/UserContext";
 import IconInput from "./IconInput";
 
 import { MdEmail } from "react-icons/md";

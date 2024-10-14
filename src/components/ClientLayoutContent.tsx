@@ -2,7 +2,7 @@
 
 import React, { useContext } from "react";
 import { usePathname } from "next/navigation";
-import { UserContext } from "@/contexts/UserContext";
+import { UserContext } from "@/provider/UserContext";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 

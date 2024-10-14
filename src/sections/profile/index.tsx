@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useContext } from "react";
 import Image from "next/image";
-import { UserContext } from '@/contexts/UserContext';
+import { UserContext } from '@/provider/UserContext';
 import AvatarCard from './components/AvatarCard';
 import { Avatar } from '@/types/type';
 import { useRouter } from "next/navigation";

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
-import { UserProvider } from "@/contexts/UserContext";
+import { UserProvider } from "@/provider/UserContext";
 import { ClientLayoutContent } from "@/components/ClientLayoutContent";
+import { MembershipPlansProvider } from "@/provider/MembershipPlansProvider";
+import { UserMembershipPlansProvider } from "@/provider/UserMembershipPlansProvider";
+import theme from "@/theme";
 import "../styles/globals.css";
 
 export const metadata: Metadata = {
@@ -16,9 +19,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <UserProvider>
-          <ClientLayoutContent>{children}</ClientLayoutContent>
-        </UserProvider>
+        <MembershipPlansProvider>
+          <UserMembershipPlansProvider>
+            <UserProvider>
+              <ClientLayoutContent>{children}</ClientLayoutContent>
+            </UserProvider>
+          </UserMembershipPlansProvider>
+        </MembershipPlansProvider>
       </body>
     </html>
   );

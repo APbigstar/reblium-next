@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname } from 'next/navigation';
 import { FaUser, FaBell, FaSearch, FaStore, FaDollarSign } from 'react-icons/fa';
 
-import { UserContext } from "@/contexts/UserContext";
+import { UserContext } from "@/provider/UserContext";
 
 const Sidebar: React.FC = () => {
   const { userInfo, isAuthenticated, loading, subscription, logout } = useContext(UserContext);
@@ -37,9 +37,11 @@ const Sidebar: React.FC = () => {
   };
 
   const getTierText = () => {
+    console.log("subscription", subscription?.plan_id === Number(process.env.NEXT_MONTHLY_PREMIUM_SUBSCRIPTION_ID))
+    console.log("subscription======", subscription?.plan_id, process.env.NEXT_MONTHLY_PREMIUM_SUBSCRIPTION_ID)
     if (!isAuthenticated || loading) return "Loading...";
     if (userInfo?.id === DEV_ACCOUNT_ID) return "Dev";
-    if (subscription?.id === Number(process.env.NEXT_MONTHLY_PREMIUM_SUBSCRIPTION_ID) || subscription?.id === Number(process.env.NEXT_YEARLY_PREMIUM_SUBSCRIPTION_ID)) return "Premium";
+    if (subscription?.plan_id === Number(process.env.NEXT_PUBLIC_MONTHLY_PREMIUM_SUBSCRIPTION_ID) || subscription?.plan_id === Number(process.env.NEXT_PUBLIC_YEARLY_PREMIUM_SUBSCRIPTION_ID)) return "Premium";
     return "Free";
   };
 

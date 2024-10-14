@@ -52,7 +52,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const [userResponse, creditsResponse, subscriptionResponse] = await Promise.all([
         fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } }),
         fetch("/api/credit", { headers: { Authorization: `Bearer ${token}` } }),
-        fetch("/api/premium", { headers: { Authorization: `Bearer ${token}` } }),
+        fetch("/api/membership/user_plans", { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
       const [userData, creditsData, subscriptionData] = await Promise.all([

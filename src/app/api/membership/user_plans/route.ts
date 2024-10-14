@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     } else {
       const planId = rows[0].plan_id;
       const userPlanId = rows[0].id;
-      return NextResponse.json({ exists: true, plan: planId, userPlanId: userPlanId });
+      return NextResponse.json({ exists: true, plan_id: planId, id: userPlanId });
     }
   } catch (error) {
     console.error("Error executing database query:", error);
