@@ -155,7 +155,7 @@ const UIComponent = () => {
 
   return (
     <div className="bg-black text-white p-8">
-      <h1 className="text-5xl font-bold text-blue-400 mb-8">Pricing</h1>
+      <h1 className="text-5xl font-bold mb-8">Pricing</h1>
 
       <div className="flex justify-center mb-8">
         <button

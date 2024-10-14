@@ -12,8 +12,6 @@ const Sidebar: React.FC = () => {
   const { userInfo, isAuthenticated, loading, subscription, logout } = useContext(UserContext);
   const pathname = usePathname();
 
-  console.log(userInfo)
-
   const [selected, setSelected] = useState<string>(() => {
     // Initialize from localStorage if available, otherwise use "profile"
     if (typeof window !== 'undefined') {
@@ -37,8 +35,6 @@ const Sidebar: React.FC = () => {
   };
 
   const getTierText = () => {
-    console.log("subscription", subscription?.plan_id === Number(process.env.NEXT_MONTHLY_PREMIUM_SUBSCRIPTION_ID))
-    console.log("subscription======", subscription?.plan_id, process.env.NEXT_MONTHLY_PREMIUM_SUBSCRIPTION_ID)
     if (!isAuthenticated || loading) return "Loading...";
     if (userInfo?.id === DEV_ACCOUNT_ID) return "Dev";
     if (subscription?.plan_id === Number(process.env.NEXT_PUBLIC_MONTHLY_PREMIUM_SUBSCRIPTION_ID) || subscription?.plan_id === Number(process.env.NEXT_PUBLIC_YEARLY_PREMIUM_SUBSCRIPTION_ID)) return "Premium";

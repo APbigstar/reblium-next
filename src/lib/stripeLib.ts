@@ -1,17 +1,17 @@
 import Stripe from 'stripe';
 
-const NEXT_PUBLIC_STRIPE_SECRET_API_KEY = process.env.NEXT_PUBLIC_STRIPE_SECRET_API_KEY;
-const NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET = process.env.NEXT_PUBLIC_STRIPE_PUBLIC_API_KEY;
+const STRIPE_SECRET_API_KEY = process.env.NEXT_PUBLIC_STRIPE_SECRET_API_KEY;
+const STRIPE_WEBHOOK_SECRET = process.env.NEXT_PUBLIC_STRIPE_PUBLIC_API_KEY;
 
-if (!NEXT_PUBLIC_STRIPE_SECRET_API_KEY) {
+if (!STRIPE_SECRET_API_KEY) {
   throw new Error('NEXT_PUBLIC_STRIPE_SECRET_API_KEY is not set in the environment variables');
 }
 
-if (!NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET) {
+if (!STRIPE_SECRET_API_KEY) {
   throw new Error('NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET is not set in the environment variables');
 }
 
-const stripe = new Stripe(NEXT_PUBLIC_STRIPE_SECRET_API_KEY);
+const stripe = new Stripe(STRIPE_SECRET_API_KEY);
 
 export async function createCustomer(email: string): Promise<Stripe.Customer> {
   try {
@@ -102,7 +102,7 @@ export async function retrievePaymentIntent(paymentIntentId: string): Promise<St
 export function constructWebhookEvent(payload:string, signature: any) {
   let event;
   try {
-    event = stripe.webhooks.constructEvent(payload, signature, (NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET || ""));
+    event = stripe.webhooks.constructEvent(payload, signature, (STRIPE_SECRET_API_KEY || ""));
   } catch (err) {
     throw new Error(`Webhook Error: ${err.message}`);
   }

@@ -172,6 +172,62 @@ const ProfileView: React.FC = () => {
     router.push("/avatar");
   };
 
+  const handleRenameAvatar = async (avatarId: number, newName: string): Promise<void> => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No token found');
+      }
+
+      // const response = await fetch(`/api/avatars/${avatarId}`, {
+      //   method: 'PUT',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': `Bearer ${token}`
+      //   },
+      //   body: JSON.stringify({ name: newName })
+      // });
+
+      // if (!response.ok) {
+      //   throw new Error('Failed to rename avatar');
+      // }
+
+      // Update the local state
+      setAvatars(prevAvatars =>
+        prevAvatars.map(avatar =>
+          avatar.id === avatarId ? { ...avatar, name: newName } : avatar
+        )
+      );
+    } catch (err) {
+      console.error("Failed to rename avatar:", err);
+    }
+  };
+
+  const handleDeleteAvatar = async (avatarId: number): Promise<void> => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No token found');
+      }
+
+      // const response = await fetch(`/api/avatars/${avatarId}`, {
+      //   method: 'DELETE',
+      //   headers: {
+      //     'Authorization': `Bearer ${token}`
+      //   }
+      // });
+
+      // if (!response.ok) {
+      //   throw new Error('Failed to delete avatar');
+      // }
+
+      // Remove the deleted avatar from the local state
+      setAvatars(prevAvatars => prevAvatars.filter(avatar => avatar.id !== avatarId));
+    } catch (err) {
+      console.error("Failed to delete avatar:", err);
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
   if (!isAuthenticated) return <div>Not authenticated</div>;
   if (!userInfo) return <div>No user data available</div>;
@@ -245,6 +301,8 @@ const ProfileView: React.FC = () => {
                 key={avatar.id}
                 avatar={avatar}
                 onSetProfileAvatar={handleSetProfileAvatar}
+                onRenameAvatar={handleRenameAvatar}
+                onDeleteAvatar={handleDeleteAvatar}
               />
             ))}
           </div>

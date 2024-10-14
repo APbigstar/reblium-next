@@ -9,11 +9,6 @@ export type Avatar = {
   submission_time: string;
 }
 
-export type AvatarCardProps = {
-  avatar: Avatar;
-  onSetProfileAvatar: (avatarImage: string) => Promise<void>;
-}
-
 export type User = {
   id: number;
   email: string;
