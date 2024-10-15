@@ -143,7 +143,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [checkTokenValidity]);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated && pathname !== '/') {
+    if (!loading && !isAuthenticated && pathname !== '/' && pathname !== '/signup') {
       router.push('/');
     }
   }, [loading, isAuthenticated, pathname, router]);

@@ -17,8 +17,9 @@ export function ClientLayoutContent({
   if (loading) return null;
 
   const isAvatarRoute = pathname.includes("/avatarMode");
+  const isSignupRoute = pathname.includes("/signup");
 
-  if (!isAuthenticated || isAvatarRoute) {
+  if (!isAuthenticated || isAvatarRoute || isSignupRoute) {
     return <>{children}</>;
   }
 

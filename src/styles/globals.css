@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "flag-icon-css/css/flag-icons.min.css";
+
 @font-face {
   font-family: Futura;
   src: url(/fonts/futura/Futura\ Bold\ font.ttf);
@@ -18,23 +20,22 @@
   font-family: "Montserrat", sans-serif;
 }
 
-
 ::-webkit-scrollbar {
   width: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1; 
+  background: #f1f1f1;
 }
- 
+
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #888; 
+  background: #888;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: #555; 
+  background: #555;
 }
 
 body {
@@ -2320,7 +2321,6 @@ loader::after,
   width: 2.5rem; /* 40px if 1rem = 16px */
   height: 2.5rem;
   position: relative;
-  display: none;
 }
 
 .soundwave {
@@ -2479,20 +2479,6 @@ loader::after,
   border: none;
 }
 
-.language-option {
-  padding: 10px;
-  margin: 10px 0px;
-  cursor: pointer;
-  border-radius: 5px;
-  /* Default background */
-}
-
-.language-option.selected {
-  background-color: var(
-    --secondary-color
-  ); /* Highlight for selected language */
-}
-
 .languagePopup form button {
   margin-top: 30px; /* Adjusted margin for better layout */
   width: 100%;
@@ -2539,7 +2525,7 @@ loader::after,
   border: none;
 }
 
-.voice-option {
+.voice-option, .language-option {
   padding: 10px;
   margin: 10px 0px;
   cursor: pointer;
@@ -2547,7 +2533,7 @@ loader::after,
   background-color: rgba(255, 255, 255, 0.1); /* Default background */
 }
 
-.voice-option.selected {
+.selected {
   background-color: var(
     --secondary-color
   ); /* Highlight for selected language */
@@ -2674,7 +2660,7 @@ loader::after,
 .fixed-container {
   position: fixed;
   top: 30px;
-  right: 100px;
+  right: 400px;
   display: flex;
 }
 
@@ -2842,7 +2828,7 @@ loader::after,
 
 #webcam-container {
   position: fixed;
-  top: 50px;
+  top: 30px;
   right: 25px;
   width: 300px;
   height: 200px; /* Adjusted to fit the total height including button and gap */
@@ -2875,7 +2861,7 @@ loader::after,
 }
 
 .webcamVideo-container {
-  border: 1px solid black;
+  border: 1px solid white;
   height: 170px; /* Fixed height as per your setup */
   width: 100%; /* Make sure the container takes the full width of its parent */
   overflow: hidden; /* Hide parts of the video that overflow */

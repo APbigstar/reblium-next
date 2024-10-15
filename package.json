@@ -19,6 +19,7 @@
     "bcryptjs": "^2.4.3",
     "crypto": "^1.0.1",
     "date-fns": "^4.1.0",
+    "flag-icon-css": "^4.1.7",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "mysql2": "^3.11.3",

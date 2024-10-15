@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import LoginForm from './components/LoginForm';
-import ForgotPasswordForm from './components/ForgotPasswordForm';
-import SocialLoginButtons from './components/SocialLoginButtons';
+import { useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import LoginForm from "./components/LoginForm";
+import ForgotPasswordForm from "./components/ForgotPasswordForm";
+import SocialLoginButtons from "./components/SocialLoginButtons";
 
 export default function LoginView() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -27,7 +27,7 @@ export default function LoginView() {
           width={96}
           height={96}
           className="absolute top-0 left-0 m-4 max-h-24 cursor-pointer"
-          onClick={() => router.push('/')}
+          onClick={() => router.push("/")}
         />
       </div>
 
@@ -44,12 +44,21 @@ export default function LoginView() {
           </div>
 
           {showForgotPassword ? (
-            <ForgotPasswordForm onBackToLogin={() => setShowForgotPassword(false)} />
+            <ForgotPasswordForm
+              onBackToLogin={() => setShowForgotPassword(false)}
+            />
           ) : (
             <>
               <LoginForm onForgotPassword={() => setShowForgotPassword(true)} />
               <hr className="my-6 border-gray-300 w-full" />
               <SocialLoginButtons />
+              <button
+                type="button"
+                className="w-1/2 block bg-blue-standard text-white font-semibold rounded-lg px-4 py-3 mx-auto mt-4"
+                onClick={() => router.push("/signup")}
+              >
+                Sign Up
+              </button>
             </>
           )}
         </div>

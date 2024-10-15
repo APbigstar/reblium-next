@@ -61,3 +61,14 @@ export type Plan = {
   mode: string;
   created_at: string;
 }
+
+export type PopupType =
+  | "chat-setting"
+  | "chatgpt-key"
+  | "voice"
+  | "language"
+  | "upload-avatar"
+  | "share"
+  | "exit"
+  | "save-avatar"
+  | "";
