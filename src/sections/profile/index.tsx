@@ -35,7 +35,7 @@ const ProfileView: React.FC = () => {
 
   const checkLoginStatus = async () => {
     try {
-      const response = await fetch("https://beta.reblium.com/api/auth/check-in", {
+      const response = await fetch("https://beta.reblium.com/api/checkIn", {
         method: "GET",
       });
 
