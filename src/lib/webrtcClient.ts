@@ -80,7 +80,7 @@ class WebRTCManager {
     return {
       address: "wss://signalling-client.ragnarok.arcware.cloud/",
       shareId: "share-79f09605-3edc-4fa8-b5b9-49a7a3a5f25b",
-      packageId: "your-package-id-here", // Replace with your actual package ID
+      packageId: "",
       settings: {},
       playOverlay: false,
       loader: setIsLoading,

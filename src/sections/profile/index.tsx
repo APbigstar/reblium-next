@@ -169,7 +169,7 @@ const ProfileView: React.FC = () => {
 
   const handleCreateNewAvatar = () => {
     setCreateMode(true);
-    router.push("/avatar");
+    router.push("/avatarMode");
   };
 
   const handleRenameAvatar = async (avatarId: number, newName: string): Promise<void> => {

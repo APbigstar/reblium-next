@@ -2673,8 +2673,8 @@ loader::after,
 
 .fixed-container {
   position: fixed;
-  margin-top: 55px;
-  right: 400px;
+  top: 30px;
+  right: 100px;
   display: flex;
 }
 
