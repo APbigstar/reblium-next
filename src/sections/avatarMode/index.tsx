@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import {  useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AvatarModeView() {
@@ -13,5 +13,19 @@ export default function AvatarModeView() {
     }
   }, [router]);
 
-  return <p className="text-white">It is avatar mode page</p>;
+  useEffect(() => {
+    async function fetchNotifications() {
+      const token = localStorage.getItem("token");
+      const response = await fetch('/api/user', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      console.log(response);
+    }
+
+    fetchNotifications();
+  }, []);
+
+  return <p className="text-white">It is notification page</p>;
 };

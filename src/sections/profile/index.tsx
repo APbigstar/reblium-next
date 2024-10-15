@@ -2,15 +2,16 @@
 
 import React, { useState, useEffect, useCallback, useContext } from "react";
 import Image from "next/image";
-import { UserContext } from '@/provider/UserContext';
-import AvatarCard from './components/AvatarCard';
-import { Avatar } from '@/types/type';
+import { UserContext } from "@/provider/UserContext";
+import AvatarCard from "./components/AvatarCard";
+import { Avatar } from "@/types/type";
 import { useRouter } from "next/navigation";
 import { useCreateModeStore } from "@/store/createModeStore";
 
 const ProfileView: React.FC = () => {
   const router = useRouter();
-  const { userInfo, loading, isAuthenticated, refetchUserData } = useContext(UserContext);
+  const { userInfo, loading, isAuthenticated, refetchUserData } =
+    useContext(UserContext);
   const setCreateMode = useCreateModeStore((state) => state.setCreateMode);
   const [isEditingBio, setIsEditingBio] = useState<boolean>(false);
   const [localBio, setLocalBio] = useState<string>("");
@@ -23,6 +24,13 @@ const ProfileView: React.FC = () => {
       setLocalBio(userInfo.bio || "");
     }
   }, [userInfo]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/");
+    }
+  }, [router]);
 
   const fetchAvatars = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -110,22 +118,22 @@ const ProfileView: React.FC = () => {
   const handleUpdateBio = async (newBio: string): Promise<void> => {
     setUpdating(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        throw new Error('No token found');
+        throw new Error("No token found");
       }
 
-      const response = await fetch('/api/user', {
-        method: 'PUT',
+      const response = await fetch("/api/user", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ bio: newBio })
+        body: JSON.stringify({ bio: newBio }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update user data');
+        throw new Error("Failed to update user data");
       }
 
       setLocalBio(newBio);
@@ -141,22 +149,22 @@ const ProfileView: React.FC = () => {
   const handleSetProfileAvatar = async (avatarImage: string): Promise<void> => {
     setUpdating(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        throw new Error('No token found');
+        throw new Error("No token found");
       }
 
-      const response = await fetch('/api/user', {
-        method: 'PUT',
+      const response = await fetch("/api/user", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ profile_image: `/${avatarImage}` })
+        body: JSON.stringify({ profile_image: `/${avatarImage}` }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update user data');
+        throw new Error("Failed to update user data");
       }
 
       refetchUserData();
@@ -172,11 +180,14 @@ const ProfileView: React.FC = () => {
     router.push("/avatarMode");
   };
 
-  const handleRenameAvatar = async (avatarId: number, newName: string): Promise<void> => {
+  const handleRenameAvatar = async (
+    avatarId: number,
+    newName: string
+  ): Promise<void> => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        throw new Error('No token found');
+        throw new Error("No token found");
       }
 
       // const response = await fetch(`/api/avatars/${avatarId}`, {
@@ -193,8 +204,8 @@ const ProfileView: React.FC = () => {
       // }
 
       // Update the local state
-      setAvatars(prevAvatars =>
-        prevAvatars.map(avatar =>
+      setAvatars((prevAvatars) =>
+        prevAvatars.map((avatar) =>
           avatar.id === avatarId ? { ...avatar, name: newName } : avatar
         )
       );
@@ -205,9 +216,9 @@ const ProfileView: React.FC = () => {
 
   const handleDeleteAvatar = async (avatarId: number): Promise<void> => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        throw new Error('No token found');
+        throw new Error("No token found");
       }
 
       // const response = await fetch(`/api/avatars/${avatarId}`, {
@@ -222,7 +233,9 @@ const ProfileView: React.FC = () => {
       // }
 
       // Remove the deleted avatar from the local state
-      setAvatars(prevAvatars => prevAvatars.filter(avatar => avatar.id !== avatarId));
+      setAvatars((prevAvatars) =>
+        prevAvatars.filter((avatar) => avatar.id !== avatarId)
+      );
     } catch (err) {
       console.error("Failed to delete avatar:", err);
     }
@@ -252,8 +265,10 @@ const ProfileView: React.FC = () => {
             </div>
           )}
         </div>
-        <p className="text-white text-xl font-bold mb-2">{userInfo.name || 'Dev Account'}</p>
-        <p className="text-gray-400 mb-4">{userInfo.email || ''}</p>
+        <p className="text-white text-xl font-bold mb-2">
+          {userInfo.name || "Dev Account"}
+        </p>
+        <p className="text-gray-400 mb-4">{userInfo.email || ""}</p>
         <div className="mt-4">
           <h3 className="text-white text-xl font-bold mb-2">Bio</h3>
           {isEditingBio ? (
@@ -288,7 +303,10 @@ const ProfileView: React.FC = () => {
       <div className="w-full bg-gray-800 p-6 rounded-lg shadow-lg">
         <div className="flex justify-between items-center">
           <h2 className="text-white text-2xl font-bold mb-4">My Avatars</h2>
-          <button onClick={handleCreateNewAvatar} className="bg-blue-standard text-white font-semibold rounded-lg px-4 py-2 transition duration-300">
+          <button
+            onClick={handleCreateNewAvatar}
+            className="bg-blue-standard text-white font-semibold rounded-lg px-4 py-2 transition duration-300"
+          >
             Create Avatar
           </button>
         </div>

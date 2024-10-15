@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 import { query } from '@/utils/db';
 import { User } from '@/types/type';
 
+const loginStatusStore = new Map();
+
 export async function POST(req: NextRequest) {
   if (!process.env.JWT_SECRET) {
     console.error('JWT_SECRET is not set in the environment variables');
@@ -36,6 +38,9 @@ export async function POST(req: NextRequest) {
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
+
+    const userIP = req.headers.get('x-forwarded-for') || req.ip;
+    loginStatusStore.set(userIP, true);
 
     return NextResponse.json({ message: 'Sign-in successful', token, userId: user.id, email: user.email });
   } catch (error) {
