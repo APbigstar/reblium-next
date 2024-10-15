@@ -30,27 +30,27 @@ const ProfileView: React.FC = () => {
     if (!token) {
       router.push("/");
     }
-    checkLoginStatus();
+    // checkLoginStatus();
   }, [router]);
 
-  const checkLoginStatus = async () => {
-    try {
-      const response = await fetch("https://beta.reblium.com/api/checkIn", {
-        method: "GET",
-      });
+  // const checkLoginStatus = async () => {
+  //   try {
+  //     const response = await fetch("/api/auth/check-in", {
+  //       method: "POST",
+  //     });
 
-      const result = await response.json();
-      console.log(result);
+  //     const result = await response.json();
+  //     console.log(result);
 
-      if (result.status === "success") {
-        console.log("User is logged in");
-      } else {
-        console.log("User is not logged in");
-      }
-    } catch (error) {
-      console.error("Error checking login status:", error);
-    }
-  };
+  //     if (result.status === "success") {
+  //       console.log("User is logged in");
+  //     } else {
+  //       console.log("User is not logged in");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error checking login status:", error);
+  //   }
+  // };
 
   const fetchAvatars = useCallback(async () => {
     if (!isAuthenticated) return;

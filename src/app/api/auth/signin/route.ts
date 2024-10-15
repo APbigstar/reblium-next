@@ -40,7 +40,10 @@ export async function POST(req: NextRequest) {
     );
 
     const userIP = req.headers.get('x-forwarded-for') || req.ip;
-    loginStatusStore.set(userIP, true);
+    const normalizedIP = userIP === '::1' ? 'localhost' : userIP; // Normalize localhost IP
+
+    console.log(normalizedIP)
+    loginStatusStore.set(normalizedIP, true);    
 
     return NextResponse.json({ message: 'Sign-in successful', token, userId: user.id, email: user.email });
   } catch (error) {
