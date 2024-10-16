@@ -1,13 +1,19 @@
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 
 export default function SocialLoginButtons() {
+  const { data: session } = useSession();
+
   const handleSocialLogin = async (provider: string) => {
     try {
       await signIn(provider, { callbackUrl: "/profile" });
+      localStorage.setItem("token", session?.user?.accessToken);
+      localStorage.setItem("provider", provider)
+      console.log("Message", `Clicked ${provider} Button`);
     } catch (error) {
       console.error("Error during social login:", error);
     }
   };
+
   return (
     <div className="login-buttons flex space-x-4 justify-center">
       <button

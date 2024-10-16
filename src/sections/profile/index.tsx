@@ -27,30 +27,11 @@ const ProfileView: React.FC = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    console.log("Message", `Clicked ${localStorage.getItem('provider')} Button`);
     if (!token) {
       router.push("/");
     }
-    // checkLoginStatus();
   }, [router]);
-
-  // const checkLoginStatus = async () => {
-  //   try {
-  //     const response = await fetch("/api/auth/check-in", {
-  //       method: "POST",
-  //     });
-
-  //     const result = await response.json();
-  //     console.log(result);
-
-  //     if (result.status === "success") {
-  //       console.log("User is logged in");
-  //     } else {
-  //       console.log("User is not logged in");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error checking login status:", error);
-  //   }
-  // };
 
   const fetchAvatars = useCallback(async () => {
     if (!isAuthenticated) return;
