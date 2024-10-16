@@ -42,7 +42,8 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
         setLoginMessage("Login successful!");
         localStorage.setItem("user_email", data.email);
         localStorage.setItem("user_id", data.userId);
-        console.log(data.userId);
+        console.log("Message", "Login Successful")
+        console.log("User ID", data.userId);
         login(data.token);
       } else {
         throw new Error(data.error || "Login failed");

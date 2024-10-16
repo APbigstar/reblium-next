@@ -196,7 +196,7 @@ const ProfileView: React.FC = () => {
   };
 
   const handleCreateNewAvatar = () => {
-    console.log('Click Create Avatar Button');
+    console.log("Message", 'Click Create Avatar Button');
     setCreateMode(true);
     router.push("/avatarMode");
   };
