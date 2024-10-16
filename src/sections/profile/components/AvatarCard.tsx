@@ -22,6 +22,8 @@ const AvatarCard: React.FC<AvatarCardProps> = ({ avatar, onSetProfileAvatar, onR
   }, [isRenaming]);
 
   const handleRename = () => {
+    console.log("Avatar ID", avatar.id);
+    console.log("User ID", localStorage.getItem('user_id'));
     if (isRenaming) {
       if (newName !== avatar.name) {
         onRenameAvatar(avatar.id, newName);
@@ -47,10 +49,17 @@ const AvatarCard: React.FC<AvatarCardProps> = ({ avatar, onSetProfileAvatar, onR
     : "/images/default_avatar.png";
 
   const handleDelete = () => {
+    console.log("Avatar ID", avatar.id);
+    console.log("User ID", localStorage.getItem('user_id'));
     if (window.confirm(`Are you sure you want to delete ${avatar.name}?`)) {
       onDeleteAvatar(avatar.id);
     }
   };
+
+  const handleEdit = () => {
+    console.log("Avatar ID", avatar.id);
+    console.log("User ID", localStorage.getItem('user_id'));
+  }
 
   return (
     <div
@@ -69,7 +78,7 @@ const AvatarCard: React.FC<AvatarCardProps> = ({ avatar, onSetProfileAvatar, onR
           />
           {isHovered && (
             <div className="absolute top-0 right-0 flex flex-col gap-1">
-              <button className="bg-blue-500 text-white px-2 py-1 rounded text-sm">
+              <button className="bg-blue-500 text-white px-2 py-1 rounded text-sm" onClick={handleEdit}>
                 Edit
               </button>
               <button 
@@ -100,7 +109,7 @@ const AvatarCard: React.FC<AvatarCardProps> = ({ avatar, onSetProfileAvatar, onR
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={handleInputKeyPress}
-            className="mt-2 p-1 text-black rounded w-full"
+            className="mt-2 p-1 text-black rounded w-[171px]"
           />
         ) : (
           <span className="avatar-name">{avatar.name}</span>
