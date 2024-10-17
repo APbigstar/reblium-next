@@ -242,10 +242,10 @@ const UIComponent = () => {
               </button>
             ) : (
               <button
-                className="w-full bg-blue-standard text-white py-2 rounded-full mb-4"
+                className={`w-full bg-blue-standard text-white py-2 rounded-full mb-4 ${isPaying ? "pointer-events-none" : ""}`}
                 onClick={handleStartNow}
               >
-                Start now
+                {isPaying ? 'Paying...' : "Start now"}
               </button>
             ))}
 

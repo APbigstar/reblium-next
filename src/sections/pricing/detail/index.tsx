@@ -36,7 +36,7 @@ const UIComponent = () => {
   });
   const [price, setPrice] = useState<number | null>(0);
   const [amount, setAmount] = useState<number | null>(0);
-  const [isPaying, setIsPaying] = useState<boolean | null>(false)
+  const [isPaying, setIsPaying] = useState<boolean | null>(false);
 
   const DEV_ACCOUNT_ID = +(process.env.NEXT_PUBLIC_DEV_ACCOUNT_ID ?? 0);
 
@@ -273,62 +273,67 @@ const UIComponent = () => {
       </div>
 
       {/* Credits Section */}
-      <div className="border border-[#FFFFFF] rounded-xl p-4">
-        <h2 className="text-3xl mb-4 text-[#00cdff]">Credits</h2>
-        <p className="mb-4 text-white">{getCreditsText()}</p>
-        <div className="flex flex-col items-center justify-center mt-8">
-          <button
-            className="bg-blue-standard text-white font-semibold rounded-lg px-4 py-2 mt-2 transition duration-300 w-[80%]"
-            onClick={() => handleStartNow(100, 12)}
-          >
-            Add 100 credits
-          </button>
-          <button
-            className="bg-blue-standard text-white font-semibold rounded-lg px-4 py-2 mt-2 transition duration-300 w-[80%]"
-            onClick={() => handleStartNow(200, 30)}
-          >
-            Add 250 credits
-          </button>
-          <button
-            className="bg-blue-standard text-white font-semibold rounded-lg px-4 py-2 mt-2 transition duration-300 w-[80%]"
-            onClick={() => handleStartNow(500, 60)}
-          >
-            Add 500 credits
-          </button>
-          <button
-            className="bg-blue-standard text-white font-semibold rounded-lg px-4 py-2 mt-2 transition duration-300 w-[80%]"
-            onClick={() => handleStartNow(1000, 96)}
-          >
-            Add 1000 credits
-          </button>
-        </div>
-        {showCardElement && !subscription?.exists && (
-          <div className="mt-8 max-w-md mx-auto p-6 rounded-lg">
-            <CardElement
-              onChange={(e) => {
-                setCardElementState({
-                  errorMessage: e.error ? e.error.message : "",
-                  complete: e.complete,
-                });
-                setCardPaymentState({ errorMessage: "" });
-              }}
-            />
-            {(cardElementState.errorMessage ||
-              cardPaymentState.errorMessage) && (
-              <p className="text-red-500 mt-2">
-                {cardElementState.errorMessage || cardPaymentState.errorMessage}
-              </p>
-            )}
+      {getTierText() !== "Dev" && (
+        <div className="border border-[#FFFFFF] rounded-xl p-4">
+          <h2 className="text-3xl mb-4 text-[#00cdff]">Credits</h2>
+          <p className="mb-4 text-white">{getCreditsText()}</p>
+          <div className="flex flex-col items-center justify-center mt-8">
             <button
-              className={`w-full bg-blue-standard text-white py-2 rounded-full mt-4 ${isPaying ? "pointer-events-none" : ""}`}
-              onClick={handleCreditPay}
-              disabled={!cardElementState.complete}
+              className={`bg-blue-standard text-white font-semibold rounded-lg px-4 py-2 mt-2 transition duration-300 w-[80%] ${isPaying ? "pointer-events-none" : ""}`}
+              onClick={() => handleStartNow(100, 12)}
             >
-              {isPaying ? 'Paying...' : "Pay Now"}
+              Add 100 credits
+            </button>
+            <button
+              className={`bg-blue-standard text-white font-semibold rounded-lg px-4 py-2 mt-2 transition duration-300 w-[80%] ${isPaying ? "pointer-events-none" : ""}`}
+              onClick={() => handleStartNow(200, 30)}
+            >
+              Add 250 credits
+            </button>
+            <button
+              className={`bg-blue-standard text-white font-semibold rounded-lg px-4 py-2 mt-2 transition duration-300 w-[80%] ${isPaying ? "pointer-events-none" : ""}`}
+              onClick={() => handleStartNow(500, 60)}
+            >
+              Add 500 credits
+            </button>
+            <button
+              className={`bg-blue-standard text-white font-semibold rounded-lg px-4 py-2 mt-2 transition duration-300 w-[80%] ${isPaying ? "pointer-events-none" : ""}`}
+              onClick={() => handleStartNow(1000, 96)}
+            >
+              Add 1000 credits
             </button>
           </div>
-        )}
-      </div>
+          {showCardElement && !subscription?.exists && (
+            <div className="mt-8 max-w-md mx-auto p-6 rounded-lg">
+              <CardElement
+                onChange={(e) => {
+                  setCardElementState({
+                    errorMessage: e.error ? e.error.message : "",
+                    complete: e.complete,
+                  });
+                  setCardPaymentState({ errorMessage: "" });
+                }}
+              />
+              {(cardElementState.errorMessage ||
+                cardPaymentState.errorMessage) && (
+                <p className="text-red-500 mt-2">
+                  {cardElementState.errorMessage ||
+                    cardPaymentState.errorMessage}
+                </p>
+              )}
+              <button
+                className={`w-full bg-blue-standard text-white py-2 rounded-full mt-4 ${
+                  isPaying ? "pointer-events-none" : ""
+                }`}
+                onClick={handleCreditPay}
+                disabled={!cardElementState.complete}
+              >
+                {isPaying ? "Paying..." : "Pay Now"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       <ToastContainer
         position="top-right"
@@ -344,5 +349,5 @@ export default function PricingDetailView() {
     <Stripe>
       <UIComponent />
     </Stripe>
-  )
+  );
 }
