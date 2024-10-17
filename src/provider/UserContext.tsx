@@ -83,6 +83,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('token');
     localStorage.removeItem('user_email');
     localStorage.removeItem('user_id');
+    localStorage.removeItem('provider');
     clearUserData();
     setIsAuthenticated(false);
     router.push('/');

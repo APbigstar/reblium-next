@@ -1,19 +1,23 @@
 "use client";
 
-import React from "react";
+import React, { RefObject } from "react";
 
 interface VideoComponentProps {
   handleSelectedMenu: (mode: string) => void;
   selectedMode: string;
+  videoContainerRef: RefObject<HTMLDivElement>;
+  audioRef: RefObject<HTMLAudioElement>;
 }
 
 const VideoComponent: React.FC<VideoComponentProps> = ({
   handleSelectedMenu,
   selectedMode,
+  videoContainerRef,
+  audioRef,
 }) => {
   return (
-    <div id="videoContainer">
-      <audio id="audioRef"></audio>
+    <div id="videoContainer" ref={videoContainerRef}>
+      <audio id="audioRef" ref={audioRef}></audio>
 
       <div className="fixed-container">
         <div

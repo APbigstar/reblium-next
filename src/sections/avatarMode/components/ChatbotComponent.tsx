@@ -152,37 +152,40 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
     </>
   );
 
-  const renderPreviewMode = () => (
-    <>
-      <div id="webcam-container">
-        <div className="webcambutton-container">
-          <div id="toggle-webcam">Turn on webcam</div>
-        </div>
-        <div className="webcamVideo-container">
-          <video id="webcam"></video>
-        </div>
-      </div>
-      <div
-        id="languagesFlags"
-        className="grid grid-cols-2 rounded-lg absolute top-1/2 -translate-y-1/2 left-10 z-50 p-2.5 bg-gray-800"
-      >
-        {languageOptions.map((language) => (
-          <div
-            key={language.code}
-            className={`language-option cursor-pointer flex flex-col items-center justify-center p-1.5 ${
-              selectedLanguage === language.lang ? "bg-blue-600 rounded" : ""
-            }`}
-            onClick={() => onLanguageSelect(language.lang)}
-          >
-            <span
-              className={`flag-icon flag-icon-${language.flagClass} text-2xl mb-1.5`}
-            ></span>
-            <span className="text-xs text-center">{language.lang}</span>
+  const renderPreviewMode = () => {
+    console.log(selectedLanguage);
+    return (
+      <>
+        <div id="webcam-container">
+          <div className="webcambutton-container">
+            <div id="toggle-webcam">Turn on webcam</div>
           </div>
-        ))}
-      </div>
-    </>
-  );
+          <div className="webcamVideo-container">
+            <video id="webcam"></video>
+          </div>
+        </div>
+        <div
+          id="languagesFlags"
+          className="grid grid-cols-2 gap-2 rounded-lg absolute top-1/2 -translate-y-1/2 left-10 z-50 p-2.5"
+        >
+          {languageOptions.map((language) => (
+            <div
+              key={language.code}
+              className={`language-option cursor-pointer flex flex-col items-center justify-center p-1.5 ${
+                selectedLanguage === language.lang ? "selected" : ""
+              }`}
+              onClick={() => onLanguageSelect(language.lang)}
+            >
+              <span
+                className={`flag-icon flag-icon-${language.flagClass} text-2xl mb-1.5`}
+              ></span>
+              <span className="text-xs text-center text-white">{language.lang}</span>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  };
 
   return (
     <div id="chatbot" className="block" tabIndex={0}>

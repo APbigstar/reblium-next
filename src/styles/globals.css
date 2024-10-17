@@ -434,11 +434,11 @@ html {
   transition: all 0.3s ease;
   z-index: 999;
   top: 39px;
+  background-color: #1616164f;
 }
 
 .collapsed {
   width: 30px;
-  background-color: #1616164f;
 }
 
 .expanded {
@@ -476,7 +476,6 @@ html {
 }
 
 #menuContent {
-  display: none;
   width: calc(100% - 60px);
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -484,11 +483,6 @@ html {
   margin-bottom: 20px;
   margin: 8px;
   animation: topFadeIn 0.5s ease-in-out;
-}
-
-/* Hide the scrollbar for WebKit-based browsers */
-#menuContent::-webkit-scrollbar {
-  display: none;
 }
 
 @keyframes topFadeIn {
@@ -2530,7 +2524,6 @@ loader::after,
   margin: 10px 0px;
   cursor: pointer;
   border-radius: 5px;
-  background-color: rgba(255, 255, 255, 0.1); /* Default background */
 }
 
 .selected {
@@ -2659,7 +2652,7 @@ loader::after,
 
 .fixed-container {
   position: fixed;
-  top: 30px;
+  top: 50px;
   right: 400px;
   display: flex;
 }
@@ -2828,7 +2821,7 @@ loader::after,
 
 #webcam-container {
   position: fixed;
-  top: 30px;
+  top: 50px;
   right: 25px;
   width: 300px;
   height: 200px; /* Adjusted to fit the total height including button and gap */

@@ -83,7 +83,7 @@ const authOptions: NextAuthOptions = {
         token.accessToken = jwt.sign(
           { userId: user.id, email: user.email },
           process.env.JWT_SECRET!,
-          { expiresIn: "1h" }
+          { expiresIn: "5h" }
         );
       }
       return token;

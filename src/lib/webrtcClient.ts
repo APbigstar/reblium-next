@@ -1,5 +1,7 @@
 import { WebRTCClient, WebRTCClientProps } from "@arcware/webrtc-plugin";
-import { RefObject } from 'react';
+import { RefObject } from "react";
+
+import { backgroundAssets } from "@/sections/avatarMode/Constant";
 
 type WebRTCClientOptions = Omit<WebRTCClientProps, "sizeContainer"> & {
   sizeContainer: HTMLElement;
@@ -49,13 +51,20 @@ class WebRTCManager {
     audioRef: RefObject<HTMLAudioElement>,
     setIsLoading: (isLoading: boolean) => void
   ): void {
-    if (typeof window === 'undefined') {
-      throw new Error('WebRTC can only be initialized in a browser environment');
+    if (typeof window === "undefined") {
+      throw new Error(
+        "WebRTC can only be initialized in a browser environment"
+      );
     }
 
     this.assertElementsExist(sizeContainerRef, videoContainerRef, audioRef);
 
-    this.options = this.createWebRTCOptions(sizeContainerRef, videoContainerRef, audioRef, setIsLoading);
+    this.options = this.createWebRTCOptions(
+      sizeContainerRef,
+      videoContainerRef,
+      audioRef,
+      setIsLoading
+    );
     this.webRTCClient = new WebRTCClient(this.options);
     this.audioRef = audioRef.current;
     this.setupVideoDetection(videoContainerRef);
@@ -66,8 +75,12 @@ class WebRTCManager {
     videoContainerRef: RefObject<HTMLElement>,
     audioRef: RefObject<HTMLAudioElement>
   ): void {
-    if (!sizeContainerRef.current || !videoContainerRef.current || !audioRef.current) {
-      throw new Error('Required elements are not available');
+    if (
+      !sizeContainerRef.current ||
+      !videoContainerRef.current ||
+      !audioRef.current
+    ) {
+      throw new Error("Required elements are not available");
     }
   }
 
@@ -97,11 +110,16 @@ class WebRTCManager {
   }
 
   private setupVideoDetection(videoContainerRef: RefObject<HTMLElement>): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
-    const observer = new MutationObserver(() => this.checkForVideo(videoContainerRef));
+    const observer = new MutationObserver(() =>
+      this.checkForVideo(videoContainerRef)
+    );
     if (videoContainerRef.current) {
-      observer.observe(videoContainerRef.current, { childList: true, subtree: true });
+      observer.observe(videoContainerRef.current, {
+        childList: true,
+        subtree: true,
+      });
     }
 
     // Initial check
@@ -109,7 +127,7 @@ class WebRTCManager {
   }
 
   private checkForVideo(videoContainerRef: RefObject<HTMLElement>): void {
-    const videoElement = videoContainerRef.current?.querySelector('video');
+    const videoElement = videoContainerRef.current?.querySelector("video");
     if (videoElement && !this.videoElement) {
       this.videoElement = videoElement;
       this.attachVideoListeners();
@@ -123,12 +141,17 @@ class WebRTCManager {
       if (!this.videoLoaded) {
         this.videoLoaded = true;
         this.videoLoadedResolver?.();
-        console.log('Video is ready to play');
+        console.log("Video is ready to play");
         this.handleSendCommands({ autocamera: "Yes" });
+        const randomBackgroundIndex = Math.floor(
+          Math.random() * backgroundAssets.length
+        );
+        const selectedBackground = backgroundAssets[randomBackgroundIndex];
+        this.handleSendCommands({ assetname: selectedBackground });
       }
     };
 
-    this.videoElement.addEventListener('canplay', handleVideoReady);
+    this.videoElement.addEventListener("canplay", handleVideoReady);
 
     if (this.videoElement.readyState >= 3) {
       handleVideoReady();
@@ -150,8 +173,10 @@ class WebRTCManager {
 
       const personaInfo = jsonData["Personas"];
 
-      if (personaInfo && typeof window !== 'undefined') {
-        const personaInput = document.getElementById("personaInput") as HTMLInputElement | null;
+      if (personaInfo && typeof window !== "undefined") {
+        const personaInput = document.getElementById(
+          "personaInput"
+        ) as HTMLInputElement | null;
         if (personaInput) {
           personaInput.value = personaInfo;
         }
@@ -180,7 +205,7 @@ class WebRTCManager {
 
     try {
       this.webRTCClient?.emitUIInteraction(command);
-      if ('resetavatar' in command) {
+      if ("resetavatar" in command) {
         this.latestLoadAvatarCommand = command.resetavatar;
       }
       console.log("Command sent successfully:", command);
@@ -192,7 +217,12 @@ class WebRTCManager {
   }
 
   public isWebRTCConnected(): boolean {
-    return !!(this.webRTCClient && (this.webRTCClient as unknown as { socket?: { ready: () => boolean } }).socket?.ready());
+    return !!(
+      this.webRTCClient &&
+      (
+        this.webRTCClient as unknown as { socket?: { ready: () => boolean } }
+      ).socket?.ready()
+    );
   }
 
   private async reconnect(): Promise<boolean> {
@@ -209,9 +239,11 @@ class WebRTCManager {
     this.reconnectAttempts++;
 
     try {
-      console.log(`Attempting to reconnect (Attempt ${this.reconnectAttempts})...`);
+      console.log(
+        `Attempting to reconnect (Attempt ${this.reconnectAttempts})...`
+      );
       this.webRTCClient = new WebRTCClient(this.options);
-      
+
       await this.waitForConnection();
 
       console.log("Reconnection successful");
@@ -250,7 +282,10 @@ class WebRTCManager {
   public handleResetButtonClick(): void {
     if (this.latestLoadAvatarCommand) {
       this.handleSendCommands({ resetavatar: this.latestLoadAvatarCommand });
-      console.log("Reset button clicked with the latest loadavatar command:", this.latestLoadAvatarCommand);
+      console.log(
+        "Reset button clicked with the latest loadavatar command:",
+        this.latestLoadAvatarCommand
+      );
     } else {
       console.log("No loadavatar command available to reset.");
     }
@@ -262,8 +297,10 @@ export const webRTCManager = WebRTCManager.getInstance();
 // Custom hook for easier use in React components
 export function useWebRTCManager() {
   return {
-    loadAndSendAvatarData: (jsonFilePath: string) => webRTCManager.loadAndSendAvatarData(jsonFilePath),
-    handleSendCommands: (command: Command) => webRTCManager.handleSendCommands(command),
+    loadAndSendAvatarData: (jsonFilePath: string) =>
+      webRTCManager.loadAndSendAvatarData(jsonFilePath),
+    handleSendCommands: (command: Command) =>
+      webRTCManager.handleSendCommands(command),
     handleResetButtonClick: () => webRTCManager.handleResetButtonClick(),
     isWebRTCConnected: () => webRTCManager.isWebRTCConnected(),
     getLastResponse: () => webRTCManager.getLastResponse(),

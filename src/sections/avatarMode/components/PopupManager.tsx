@@ -194,7 +194,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             <div
               key={voice.value}
               className={`voice-option ${
-                formData.selectedVoice === voice.value ? "selected" : ""
+                formData.selectedVoice === voice.value ? "selected" : "bg-gray-800"
               }`}
               onClick={() => handleVoiceSelect(voice.value)}
             >
@@ -231,7 +231,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             <div
               key={language.code}
               className={`language-option ${
-                formData.selectedLanguage === language.lang ? "selected" : ""
+                formData.selectedLanguage === language.lang ? "selected" : "bg-gray-800"
               }`}
               onClick={() => handleLanguageSelect(language.lang)}
             >
