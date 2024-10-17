@@ -17,6 +17,10 @@ import RandomSubMenu from "./Menus/RandomSubMenu";
 import SkinSubMenu from "./Menus/SkinSubMenu";
 import MakeupSubMenu from "./Menus/MakeupSubMenu";
 import FaceSubMenu from "./Menus/FaceSubMenu";
+import HairSubMenu from "./Menus/HairSubMenu";
+import AccessoriesSubMenu from "./Menus/AccessoriesSubMenu";
+import BackgroundSubMenu from "./Menus/BackgroundSubMenu";
+import WardrobeSubMenu from "./Menus/WardrobeSubMenu";
 
 import { backgroundAssets } from "../Constant";
 
@@ -45,6 +49,10 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = () => {
     { key: "skin", component: SkinSubMenu },
     { key: "makeup", component: MakeupSubMenu },
     { key: "face", component: FaceSubMenu },
+    { key: "hair", component: HairSubMenu },
+    { key: "accessories", component: AccessoriesSubMenu },
+    { key: "background", component: BackgroundSubMenu },
+    { key: "wardrobe", component: WardrobeSubMenu },
   ];
 
   // useEffect(() => {
