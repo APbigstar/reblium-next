@@ -16,9 +16,9 @@ export async function POST(req: NextRequest) {
     const getEmail = "SELECT * FROM Users WHERE id = ?";
     const user = await query<User[]>(getEmail, [userId]);
 
-    const { amount } = await req.json();
+    const { price } = await req.json();
 
-    if (!amount) {
+    if (!price) {
       return NextResponse.json({ error: 'Missing amount' }, { status: 400 });
     }
 
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       customer_id = stripeCustomers[0].customer_id;
     }
 
-    const payment_intent = await createPaymentIntent(Math.round(amount * 100), customer_id, user[0]?.email);
+    const payment_intent = await createPaymentIntent(Math.round(price * 100), customer_id, user[0]?.email);
 
     return NextResponse.json({ 
       success: true, 

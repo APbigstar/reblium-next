@@ -13,8 +13,8 @@ import "react-toastify/dist/ReactToastify.css";
 
 const UIComponent = () => {
   const router = useRouter();
-  const { subscription, refetchUserData } = useContext(UserContext);
-  console.log(subscription);
+  const { subscription, refetchUserData, loading, isAuthenticated, userInfo } =
+    useContext(UserContext);
 
   const [selectedPeriod, setSelectedPeriod] = useState("MONTHLY");
   const [showCardElement, setShowCardElement] = useState(false);
@@ -25,6 +25,7 @@ const UIComponent = () => {
   const [cardPaymentState, setCardPaymentState] = useState({
     errorMessage: "",
   });
+  const [isPaying, setIsPaying] = useState<boolean | null>(false)
 
   const payStripeCardPayment = usePayStripeCardPayment();
   const cancelUserMembershipPlan = useCancelUserMembershipPlan();
@@ -38,6 +39,20 @@ const UIComponent = () => {
 
   const handleStartNow = () => {
     setShowCardElement(true);
+  };
+
+  const getTierText = () => {
+    const DEV_ACCOUNT_ID = +(process.env.NEXT_PUBLIC_DEV_ACCOUNT_ID ?? 0);
+    if (!isAuthenticated || loading) return "Loading...";
+    if (userInfo?.id === DEV_ACCOUNT_ID) return "Dev";
+    if (
+      subscription?.plan_id ===
+        Number(process.env.NEXT_PUBLIC_MONTHLY_PREMIUM_SUBSCRIPTION_ID) ||
+      subscription?.plan_id ===
+        Number(process.env.NEXT_PUBLIC_YEARLY_PREMIUM_SUBSCRIPTION_ID)
+    )
+      return "Premium";
+    return "Free";
   };
 
   async function updateCreditAmount() {
@@ -58,7 +73,7 @@ const UIComponent = () => {
 
       const res = await response.json();
 
-      console.log('Update Status', res)
+      console.log("Update Status", res);
 
       if (res.success) {
         refetchUserData();
@@ -72,6 +87,7 @@ const UIComponent = () => {
 
   const handlePremiumPay = async () => {
     try {
+      setIsPaying(true)
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token found");
 
@@ -85,8 +101,6 @@ const UIComponent = () => {
           },
           body: JSON.stringify({
             plan_id: selectedPeriod === "MONTHLY" ? 3 : 4,
-            userId: "globalUserInfoId", // Replace with actual user ID
-            userEmail: "globalUserEmail", // Replace with actual user email
           }),
         }
       );
@@ -121,7 +135,6 @@ const UIComponent = () => {
             },
             body: JSON.stringify({
               payment_intent_id: payResult.paymentIntent.id,
-              userId: "globalUserInfoId", // Replace with actual user ID
             }),
           }
         );
@@ -132,9 +145,11 @@ const UIComponent = () => {
             confirmResultStatus.error || "Failed to verify payment"
           );
         } else {
+          setIsPaying(false)
           setCardPaymentState({ errorMessage: "Payment successful!" });
+          toast.success(`Set up subscription succeslly`);
           setShowCardElement(false);
-          await updateCreditAmount()
+          await updateCreditAmount();
         }
       }
     } catch (error) {
@@ -148,7 +163,7 @@ const UIComponent = () => {
       toast.success("Subscription cancelled successfully");
       await refetchUserData();
     } catch (error) {
-      toast.success("Subscription cancelled successfully");
+      toast.success("Failed to cancel subscription");
       alert("Failed to cancel subscription");
     }
   };
@@ -202,7 +217,9 @@ const UIComponent = () => {
           {subscription?.exists && (
             <div className="absolute top-4 right-10 flex items-center gap-2 justify-start">
               <FaStar className="text-blue-starndard" />
-              <p className="text-white">Current Plan</p>
+              {getTierText() !== "Dev" && (
+                <p className="text-white">Current Plan</p>
+              )}
             </div>
           )}
 
@@ -214,21 +231,24 @@ const UIComponent = () => {
               /{selectedPeriod.toLowerCase() === "monthly" ? "month" : "year"}
             </span>
           </p>
-          {subscription?.exists ? (
-            <button
-              className="w-full bg-red-500 text-white py-2 rounded-full mb-4"
-              onClick={handleCancelPremium}
-            >
-              Cancel
-            </button>
-          ) : (
-            <button
-              className="w-full bg-blue-standard text-white py-2 rounded-full mb-4"
-              onClick={handleStartNow}
-            >
-              Start now
-            </button>
-          )}
+
+          {getTierText() !== "Dev" &&
+            (subscription?.exists ? (
+              <button
+                className="w-full bg-red-500 text-white py-2 rounded-full mb-4"
+                onClick={handleCancelPremium}
+              >
+                Cancel
+              </button>
+            ) : (
+              <button
+                className="w-full bg-blue-standard text-white py-2 rounded-full mb-4"
+                onClick={handleStartNow}
+              >
+                Start now
+              </button>
+            ))}
+
           <ul className="space-y-2 text-gray-400">
             <li>• Cancel anytime</li>
             <li>• No Watermarks</li>
@@ -255,11 +275,11 @@ const UIComponent = () => {
             </p>
           )}
           <button
-            className="w-full bg-blue-standard text-white py-2 rounded-full mt-4"
+            className={`w-full bg-blue-standard text-white py-2 rounded-full mt-4 ${isPaying ? "pointer-events-none" : ""}`}
             onClick={handlePremiumPay}
             disabled={!cardElementState.complete}
           >
-            Pay Now
+            {isPaying ? 'Paying...' : "Pay Now"}
           </button>
         </div>
       )}

@@ -77,6 +77,7 @@ export async function PUT(req: NextRequest) {
         newAmount = currentAmount + amount;
         premiumValue = 'free';
       } else if (userCredits[0].premium_status === 'free' && (premium === 'premium' || premium === 'pro')) {
+        console.log('premium plan+++++++++++++++++')
         newAmount = currentAmount + amount;
         premiumValue = premium;
       } else {

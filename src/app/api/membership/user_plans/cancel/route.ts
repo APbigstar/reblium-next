@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { query } from '@/utils/db';
 import { verifyToken } from '@/utils/verifyToken';
 import { updateSubscriptionEndPeriod } from '@/lib/stripeLib';
-import { UserPlan } from '@/types/type';
+import { UserCredit, UserPlan } from '@/types/type';
 import { format } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
@@ -35,10 +35,17 @@ export async function POST(req: NextRequest) {
 
       const updateUserPlan = `
         UPDATE User_Plans 
-        SET expires_at = ? AND is_active = ?
+        SET expires_at = ?, is_active = ?
         WHERE id = ?
       `;
       await query(updateUserPlan, [expiresAt, 0, user_plan_id]);
+
+      const updateUserCredit = `
+        UPDATE User_Credits 
+        SET premium_status = ?
+        WHERE user_id = ?
+      `;
+      await query(updateUserCredit, ['free', userId]);
 
       const getUpdatedPlan = "SELECT * FROM User_Plans WHERE id = ?";
       const updatedPlans = await query<UserPlan[]>(getUpdatedPlan, [user_plan_id]);

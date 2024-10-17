@@ -15,9 +15,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { payment_intent_id, amount } = await req.json();
+    const { payment_intent_id, price } = await req.json();
 
-    if (!payment_intent_id || !amount) {
+    if (!payment_intent_id || !price) {
       return NextResponse.json({ error: 'Missing payment_intent_id or amount' }, { status: 400 });
     }
 
@@ -37,12 +37,12 @@ export async function POST(req: NextRequest) {
       const userCredits = await query<UserCredit[]>(getUserCredit, [userId]);
 
       if (userCredits.length > 0) {
-        const totalAmount = userCredits[0].amount + creditData[amount];
+        const totalAmount = userCredits[0].amount + creditData[price];
         const updateUserCredit = "UPDATE User_Credits SET amount = ? WHERE user_id = ?";
         await query(updateUserCredit, [totalAmount, userId]);
       } else {
         const insertUserCredit = "INSERT INTO User_Credits (user_id, amount) VALUES (?, ?)";
-        await query(insertUserCredit, [userId, creditData[amount]]);
+        await query(insertUserCredit, [userId, creditData[price]]);
       }
 
       return NextResponse.json({ success: true });

@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
 
     let isTrial: boolean = false;
     let clientSecret: string = "";
+    const currentTime = new Date();
 
     if (userPlans.length === 0) {
       const subscription: any = await createSubscription(
@@ -71,8 +72,8 @@ export async function POST(req: NextRequest) {
       );
       const { subscription_id, status, is_trial, client_secret } = subscription;
       await query(
-        "INSERT INTO User_Plans (plan_id, user_id, provider_id, status) VALUES (?, ?, ?, ?)",
-        [plan_id, userId, subscription_id, status]
+        "INSERT INTO User_Plans (plan_id, user_id, provider_id, status, created_at) VALUES (?, ?, ?, ?, ?)",
+        [plan_id, userId, subscription_id, status, currentTime]
       );
       isTrial = is_trial;
       clientSecret = client_secret;
@@ -91,8 +92,8 @@ export async function POST(req: NextRequest) {
         const { subscription_id, status, is_trial, client_secret } =
           subscription;
         await query(
-          "INSERT INTO User_Plans (plan_id, user_id, provider_id, status) VALUES (?, ?, ?, ?)",
-          [plan_id, userId, subscription_id, status]
+          "INSERT INTO User_Plans (plan_id, user_id, provider_id, status, created_at) VALUES (?, ?, ?, ?, ?)",
+          [plan_id, userId, subscription_id, status, currentTime]
         );
         isTrial = is_trial;
         clientSecret = client_secret;

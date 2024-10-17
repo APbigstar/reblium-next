@@ -17,15 +17,15 @@ interface PopupData {
 interface PopupManagerProps {
   type: PopupType;
   onClose: () => void;
-  onConfirm: (data: PopupData) => void;
-  selectedLanguage: string;
+  onConfirm?: (data: PopupData) => void;
+  selectedLanguage?: string;
 }
 
 const PopupManager: React.FC<PopupManagerProps> = ({
   type,
   onClose,
-  onConfirm,
-  selectedLanguage,
+  onConfirm = () => {},
+  selectedLanguage = 'en-us',
 }) => {
   const router = useRouter();
 

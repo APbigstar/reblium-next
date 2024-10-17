@@ -1,17 +1,21 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import Image from "next/image";
 import {
   FaLockOpen,
   FaLightbulb,
   FaExpandArrowsAlt,
+  FaCompressArrowsAlt,
   FaDoorOpen,
   FaUndo,
   FaSave,
+  FaLock,
 } from "react-icons/fa";
 
 import { useWebRTCManager } from "@/lib/webrtcClient";
+
+import PopupManager from "./PopupManager";
 
 import RandomSubMenu from "./Menus/RandomSubMenu";
 import SkinSubMenu from "./Menus/SkinSubMenu";
@@ -22,23 +26,67 @@ import AccessoriesSubMenu from "./Menus/AccessoriesSubMenu";
 import BackgroundSubMenu from "./Menus/BackgroundSubMenu";
 import WardrobeSubMenu from "./Menus/WardrobeSubMenu";
 
-import { backgroundAssets } from "../Constant";
+import { PopupType } from "@/types/type";
+
+import { assetNames, backgroundAssets } from "../Constant";
 
 interface ArtistModeProps {
-  // Add any props if needed
+  selectedMode: string;
 }
 
-const ArtistModeComponent: React.FC<ArtistModeProps> = () => {
+const useFullscreen = () => {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((e) => {
+        console.error(
+          `Error attempting to enable fullscreen mode: ${e.message} (${e.name})`
+        );
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  }, []);
+
+  return { isFullscreen, toggleFullscreen };
+};
+
+const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
   const [activeMenu, setActiveMenu] = useState("generator");
   const [isAutoCamera, setIsAutoCamera] = useState(true);
   const [lightValue, setLightValue] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
   const [isCollapse, setIsCollapse] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupType, setPopupType] = useState<PopupType>("");
+  const { isFullscreen, toggleFullscreen } = useFullscreen();
+
+  const handleOpenPopup = useCallback((type: PopupType) => {
+    setPopupType(type);
+    setShowPopup(true);
+  }, []);
+
+  const handleClosePopup = useCallback(() => {
+    setShowPopup(false);
+    setPopupType("");
+  }, []);
 
   const {
     loadAndSendAvatarData,
     handleSendCommands,
-    handleResetButtonClick: webRTCResetButtonClick,
+    handleResetButtonClick,
     isWebRTCConnected,
     getLastResponse,
     getSelectedCommand,
@@ -55,15 +103,11 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = () => {
     { key: "wardrobe", component: WardrobeSubMenu },
   ];
 
-  // useEffect(() => {
-  //   const loadAvatar = async () => {
-  //     setIsLoading(true);
-  //     await loadAndSendAvatarData("/path/to/your/avatar.json");
-  //     setIsLoading(false);
-  //   };
-
-  //   loadAvatar();
-  // }, [loadAndSendAvatarData]);
+  useEffect(() => {
+    handleSendCommands({
+      cameraswitch: "Head",
+    });
+  }, []);
 
   // const [gender, setGender] = useState<Record<string, boolean>>({
   //   Male: true,
@@ -96,70 +140,54 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = () => {
   // const [age, setAge] = useState(35);
 
   // useEffect(() => {
-  //     handleRandomization();
+  //     handleRandomizeClick();
   // }, []);
 
-  // const handleRandomization = () => {
-  //   if (isWebRTCConnected) {
-  //     const checkboxValues = [
-  //       ...Object.entries(gender),
-  //       ...Object.entries(ethnicities),
-  //       ...Object.entries(groomingOptions),
-  //     ].map(([name, checked]) => `${name}*${checked ? 1 : 0}`);
+  const handleRandomizeClick = () => {
+    console.log("Clicked Handle Randomize Button");
+    // if (isWebRTCConnected) {
+    // const randomAge = Math.floor(Math.random() * 100) + 1;
+    // setAge(randomAge);
+    //   const checkboxValues = [
+    //     ...Object.entries(gender),
+    //     ...Object.entries(ethnicities),
+    //     ...Object.entries(groomingOptions),
+    //   ].map(([name, checked]) => `${name}*${checked ? 1 : 0}`);
 
-  //     const ageRange = `Agemin*${age}, Agemax*${age}`;
-  //     const result = [...checkboxValues, ageRange].join(", ");
+    //   const ageRange = `Agemin*${age}, Agemax*${age}`;
+    //   const result = [...checkboxValues, ageRange].join(", ");
 
-  //     handleSendCommands({ randomize: result });
-  //     handleSendCommands({ assetname: "Studio_makeUp" });
+    //   handleSendCommands({ randomize: result });
+    //   handleSendCommands({ assetname: "Studio_makeUp" });
 
-  //     const randomBackgroundIndex = Math.floor(
-  //       Math.random() * backgroundAssets.length
-  //     );
-  //     const selectedBackground = backgroundAssets[randomBackgroundIndex];
-  //     handleSendCommands({ assetname: selectedBackground });
-  //   }
-  // };
+    //   const randomBackgroundIndex = Math.floor(
+    //     Math.random() * backgroundAssets.length
+    //   );
+    //   const selectedBackground = backgroundAssets[randomBackgroundIndex];
+    //   handleSendCommands({ assetname: selectedBackground });
+    // }
+  };
 
   const toggleMenu = (menu: string) => {
     setActiveMenu(menu);
   };
 
-  const toggleAutoCamera = () => {
-    setIsAutoCamera(!isAutoCamera);
+  const toggleAutoCamera = useCallback(() => {
+    setIsAutoCamera((prevState) => !prevState);
     handleSendCommands({ autocamera: isAutoCamera ? "No" : "Yes" });
-  };
+    console.log("Auto camera toggled:", !isAutoCamera ? "Unlocked" : "Locked");
+  }, [isAutoCamera]);
 
   const toggleAssetName = () => {
-    // Implement toggleAssetName logic
+    let currentAssetIndex = 0;
+    currentAssetIndex = (currentAssetIndex + 1) % assetNames.length;
+    const newAssetName = assetNames[currentAssetIndex];
+    handleSendCommands({ assetname: newAssetName });
   };
-
-  const toggleFullScreen = () => {
-    // Implement toggleFullScreen logic
-  };
-
-  const handleLightChange = (value: number) => {
-    setLightValue(value);
-    handleSendCommands({ slidertype: `LightDirection*${value}` });
-  };
-
-  const handleRandomizeClick = () => {
-    // Implement handleRandomizeClick logic
-  };
-
-  const showExitConfirmation = () => {
-    // Implement showExitConfirmation logic
-  };
-
-  const showSaveAvatarExit = () => {
-    // Implement showSaveAvatarExit logic
-  };
-
-  const handleResetButtonClick = () => {};
 
   return (
     <div className="artist_mode" id="artist_mode" tabIndex={0}>
-      {isLoading && (
+      {isWebRTCConnected && (
         <div className="loader-overlay">
           <div className="loader">
             <Image
@@ -198,18 +226,39 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = () => {
       </div>
 
       <div className="bottomleftmenu">
-        <div className="custom-submenu" id="customSubmenu">
-          <FaLockOpen
-            id="lockIcon"
-            onClick={toggleAutoCamera}
-            title="Camera Lock"
-          />
+        <div
+          className="flex items-center gap-8 custom-submenu"
+          id="customSubmenu"
+        >
+          {isAutoCamera ? (
+            <FaLockOpen
+              id="lockIcon"
+              onClick={toggleAutoCamera}
+              title="Lock Camera"
+              style={{ color: "white" }}
+            />
+          ) : (
+            <FaLock
+              id="lockIcon"
+              onClick={toggleAutoCamera}
+              title="Unlock Camera"
+              style={{ color: "yellow" }}
+            />
+          )}
           <FaLightbulb onClick={toggleAssetName} title="Change Light" />
-          <FaExpandArrowsAlt
-            id="fullScreenIcon"
-            onClick={toggleFullScreen}
-            title="Change Screen Size"
-          />
+          {isFullscreen ? (
+            <FaCompressArrowsAlt
+              id="fullScreenIcon"
+              onClick={toggleFullscreen}
+              title="Exit Full Screen"
+            />
+          ) : (
+            <FaExpandArrowsAlt
+              id="fullScreenIcon"
+              onClick={toggleFullscreen}
+              title="Enter Full Screen"
+            />
+          )}
         </div>
       </div>
 
@@ -257,7 +306,7 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = () => {
         <div className="flex items-center gap-2">
           <button
             className="flex items-center gap-2 menu-button"
-            onClick={showExitConfirmation}
+            onClick={() => handleOpenPopup("exit")}
           >
             <FaDoorOpen /> <span>Exit</span>
           </button>
@@ -270,7 +319,7 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = () => {
           </button>
           <button
             className="flex items-center gap-2 menu-button"
-            onClick={showSaveAvatarExit}
+            onClick={() => handleOpenPopup("save-avatar")}
           >
             <FaSave /> <span>Save Avatar</span>
           </button>
@@ -296,6 +345,10 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = () => {
           </div>
         </div>
       </div>
+
+      {showPopup && selectedMode !== "preview" && (
+        <PopupManager type={popupType} onClose={handleClosePopup} />
+      )}
     </div>
   );
 };

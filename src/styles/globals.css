@@ -616,26 +616,25 @@ html {
 
 .bottomleftmenu {
   position: fixed;
-  bottom: 10px;
-  left: 10px;
+  bottom: 32px;
+  left: 55px;
   z-index: 999;
 }
 
 /* Submenu styling */
 .custom-submenu {
   position: relative;
-  display: inline-block;
 }
 
-.custom-submenu i {
+.custom-submenu svg {
+  display: block;
   color: white;
-  font-size: 18px;
-  padding: 17px;
+  font-size: 40px;
   cursor: pointer;
   transition: color 0.3s ease;
 }
 
-.custom-submenu i:hover {
+.custom-submenu svg:hover {
   color: var(--secondary-color);
 }
 
