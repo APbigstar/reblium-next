@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
     console.log(result);
 
-    return NextResponse.json({ success: true, insertedId: result?.insertId });
+    return NextResponse.json({ success: true, insertedId: result.insertId });
   } catch (error) {
     console.error("Error fetching active plans:", error);
     return NextResponse.json(
