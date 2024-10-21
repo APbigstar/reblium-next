@@ -179,6 +179,7 @@ const ProfileView: React.FC = () => {
   const handleCreateNewAvatar = () => {
     console.log("Message", 'Click Create Avatar Button');
     setCreateMode(true);
+    localStorage.setItem('create_mode', 'set')
     router.push("/avatarMode");
   };
 
@@ -313,7 +314,7 @@ const ProfileView: React.FC = () => {
           </button>
         </div>
         {avatarsLoading ? (
-          <div>Loading avatars...</div>
+          <div className="text-white">Loading avatars...</div>
         ) : (
           <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
             {avatars.map((avatar) => (

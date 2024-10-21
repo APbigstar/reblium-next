@@ -66,6 +66,8 @@ class WebRTCManager {
       setIsLoading
     );
     this.webRTCClient = new WebRTCClient(this.options);
+    console.log("WebRTCCLIENT_______", this.webRTCClient)
+    console.log("WebRTCCLIENT_______111111", !!(this.webRTCClient))
     this.audioRef = audioRef.current;
     this.setupVideoDetection(videoContainerRef);
   }
@@ -141,13 +143,7 @@ class WebRTCManager {
       if (!this.videoLoaded) {
         this.videoLoaded = true;
         this.videoLoadedResolver?.();
-        console.log("Video is ready to play");
         this.handleSendCommands({ autocamera: "Yes" });
-        const randomBackgroundIndex = Math.floor(
-          Math.random() * backgroundAssets.length
-        );
-        const selectedBackground = backgroundAssets[randomBackgroundIndex];
-        this.handleSendCommands({ assetname: selectedBackground });
       }
     };
 
@@ -195,11 +191,6 @@ class WebRTCManager {
   }
 
   public async handleSendCommands(command: Command): Promise<boolean> {
-    if (!this.isWebRTCConnected()) {
-      const reconnected = await this.reconnect();
-      if (!reconnected) return false;
-    }
-
     this.selectedCommand = Object.keys(command)[0];
     console.log("Selected command:", this.selectedCommand);
 
@@ -217,6 +208,8 @@ class WebRTCManager {
   }
 
   public isWebRTCConnected(): boolean {
+    console.log("WebRTCCLIENT_______2222222222", this.webRTCClient)
+
     return !!(
       this.webRTCClient &&
       (
@@ -225,51 +218,7 @@ class WebRTCManager {
     );
   }
 
-  private async reconnect(): Promise<boolean> {
-    if (!this.options) {
-      console.error("WebRTC options not initialized. Cannot reconnect.");
-      return false;
-    }
-
-    if (this.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS) {
-      console.error("Max reconnection attempts reached");
-      return false;
-    }
-
-    this.reconnectAttempts++;
-
-    try {
-      console.log(
-        `Attempting to reconnect (Attempt ${this.reconnectAttempts})...`
-      );
-      this.webRTCClient = new WebRTCClient(this.options);
-
-      await this.waitForConnection();
-
-      console.log("Reconnection successful");
-      this.reconnectAttempts = 0;
-      return true;
-    } catch (error) {
-      console.error("Reconnection failed:", error);
-      return false;
-    }
-  }
-
-  private async waitForConnection(timeout = 10000): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      const timeoutId = setTimeout(() => {
-        reject(new Error("Connection timeout"));
-      }, timeout);
-
-      const checkConnection = setInterval(() => {
-        if (this.isWebRTCConnected()) {
-          clearInterval(checkConnection);
-          clearTimeout(timeoutId);
-          resolve();
-        }
-      }, 500);
-    });
-  }
+ 
 
   public getLastResponse(): string | null {
     return this.lastResponse;

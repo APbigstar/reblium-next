@@ -80,10 +80,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [fetchUserData, router]);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user_email');
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('provider');
+    localStorage.clear();
     clearUserData();
     setIsAuthenticated(false);
     router.push('/');

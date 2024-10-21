@@ -2,6 +2,8 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PopupType } from "@/types/type";
 
+import { useWebRTCManager } from "@/lib/webrtcClient";
+
 interface PopupData {
   type: PopupType;
   apiKey: string;
@@ -28,6 +30,16 @@ const PopupManager: React.FC<PopupManagerProps> = ({
   selectedLanguage = 'en-us',
 }) => {
   const router = useRouter();
+  
+  const {
+    loadAndSendAvatarData,
+    handleSendCommands,
+    handleResetButtonClick,
+    isWebRTCConnected,
+    getLastResponse,
+    getSelectedCommand,
+  } = useWebRTCManager();
+
 
   const [formData, setFormData] = useState<PopupData>({
     type,
@@ -90,10 +102,34 @@ const PopupManager: React.FC<PopupManagerProps> = ({
       });
   };
 
-  const handleSaveAvatar = (e: React.FormEvent) => {
+  const handleSaveAvatar = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Calling Save Avatar Function");
     onConfirm({ ...formData, type: "save-avatar" });
+
+    const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No token found");
+      }
+
+    const response = await fetch(
+      "/api/avatars",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          avatarName: formData.avatarName
+        }),
+      }
+    );
+
+    const {insertedId, success} = await response.json();
+    if (success) {
+      handleSendCommands({ saveavatar: insertedId });
+    }
   };
 
   const handleLanguageSelect = (lang: string) => {
@@ -104,16 +140,8 @@ const PopupManager: React.FC<PopupManagerProps> = ({
     setFormData((prev) => ({ ...prev, selectedVoice: voice }));
   };
 
-  const handleLanguageConfirm = () => {
-    onConfirm({ ...formData, type: "language" });
-  };
-
-  const handleVoiceConfirm = () => {
-    onConfirm({ ...formData, type: "voice" });
-  };
-
-  const handleConfirm = () => {
-    onConfirm({ ...formData, type });
+  const handleConfirm = (type: PopupType) => {
+    onConfirm({ ...formData, type: type });
   };
 
   const renderChatSetting = () => (
@@ -147,7 +175,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             onChange={handleInputChange}
           ></textarea>
         </div>
-        <button type="button" id="personaConfirmButton" onClick={handleConfirm}>
+        <button type="button" id="personaConfirmButton" onClick={() => handleConfirm('chat-setting')}>
           Save
         </button>
       </form>
@@ -170,7 +198,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
           value={formData.apiKey}
           onChange={handleInputChange}
         />
-        <button type="button" id="apiKeyConfirmButton" onClick={handleConfirm}>
+        <button type="button" id="apiKeyConfirmButton" onClick={() => handleConfirm('chatgpt-key')}>
           Confirm
         </button>
       </form>
@@ -202,7 +230,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             </div>
           ))}
         </ul>
-        <button type="button" onClick={handleVoiceConfirm}>
+        <button type="button" onClick={() => handleConfirm('voice')}>
           Confirm
         </button>
       </form>
@@ -239,7 +267,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             </div>
           ))}
         </ul>
-        <button type="button" onClick={handleLanguageConfirm}>
+        <button type="button" onClick={() => handleConfirm('language')}>
           Confirm
         </button>
       </form>
@@ -274,7 +302,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
         >
           File uploaded successfully!
         </p>
-        <button type="button" id="dhsConfirmButton" onClick={handleConfirm}>
+        <button type="button" id="dhsConfirmButton" onClick={() => handleConfirm('upload-avatar')}>
           Upload
         </button>
       </form>
@@ -336,7 +364,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
         <h3>New Persona</h3>
         <img
           className="avatar-icon"
-          src="/Default_Avatar_Icon.png"
+          src="/images/Default_Avatar_Icon.png"
           alt="Default Avatar"
         />
         <input

@@ -109,63 +109,85 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
     });
   }, []);
 
-  // const [gender, setGender] = useState<Record<string, boolean>>({
-  //   Male: true,
-  //   Female: true,
-  // });
-  // const [ethnicities, setEthnicities] = useState<Record<string, boolean>>({
-  //   "East Asian": false,
-  //   "Latino/ Hispanic": false,
-  //   "South Asian/ Indian": false,
-  //   "Middle Eastern": false,
-  //   "European/ Caucasian": false,
-  //   "Indigenous/ Native American": false,
-  //   "African/ Caribbean": false,
-  // });
-  // const [groomingOptions, setGroomingOptions] = useState<
-  //   Record<string, boolean>
-  // >({
-  //   Hairshort: true,
-  //   Tattoo: true,
-  //   Hairmedium: true,
-  //   Beard: true,
-  //   Hairlong: true,
-  //   Mustache: true,
-  //   Haircolor: true,
-  //   Eyescolor: true,
-  //   Scene: false,
-  //   Look: false,
-  // });
+  const [gender, setGender] = useState<Record<string, boolean>>({
+    Male: true,
+    Female: true,
+  });
+  const [ethnicities, setEthnicities] = useState<Record<string, boolean>>({
+    "East Asian": false,
+    "Latino/ Hispanic": false,
+    "South Asian/ Indian": false,
+    "Middle Eastern": false,
+    "European/ Caucasian": false,
+    "Indigenous/ Native American": false,
+    "African/ Caribbean": false,
+  });
+  const [groomingOptions, setGroomingOptions] = useState<
+    Record<string, boolean>
+  >({
+    Hairshort: true,
+    Tattoo: true,
+    Hairmedium: true,
+    Beard: true,
+    Hairlong: true,
+    Mustache: true,
+    Haircolor: true,
+    Eyescolor: true,
+    Scene: false,
+    Look: false,
+  });
 
-  // const [age, setAge] = useState(35);
-
-  // useEffect(() => {
-  //     handleRandomizeClick();
-  // }, []);
+  const [age, setAge] = useState(35);
 
   const handleRandomizeClick = () => {
     console.log("Clicked Handle Randomize Button");
-    // if (isWebRTCConnected) {
-    // const randomAge = Math.floor(Math.random() * 100) + 1;
-    // setAge(randomAge);
-    //   const checkboxValues = [
-    //     ...Object.entries(gender),
-    //     ...Object.entries(ethnicities),
-    //     ...Object.entries(groomingOptions),
-    //   ].map(([name, checked]) => `${name}*${checked ? 1 : 0}`);
 
-    //   const ageRange = `Agemin*${age}, Agemax*${age}`;
-    //   const result = [...checkboxValues, ageRange].join(", ");
+    if (isWebRTCConnected) {
+      const randomAge = Math.floor(Math.random() * 100) + 1;
 
-    //   handleSendCommands({ randomize: result });
-    //   handleSendCommands({ assetname: "Studio_makeUp" });
+      // Update the age state first
+      setAge(randomAge);
 
-    //   const randomBackgroundIndex = Math.floor(
-    //     Math.random() * backgroundAssets.length
-    //   );
-    //   const selectedBackground = backgroundAssets[randomBackgroundIndex];
-    //   handleSendCommands({ assetname: selectedBackground });
-    // }
+      // Generate new values for gender, ethnicities, and grooming options
+      const randomGender = Object.keys(gender).reduce((acc, key) => {
+        acc[key] = Math.random() < 0.5; // Randomly choose true or false
+        return acc;
+      }, {});
+
+      const randomEthnicities = Object.keys(ethnicities).reduce((acc, key) => {
+        acc[key] = Math.random() < 0.5; // Randomly choose true or false
+        return acc;
+      }, {});
+
+      const randomGroomingOptions = Object.keys(groomingOptions).reduce(
+        (acc, key) => {
+          acc[key] = Math.random() < 0.5; // Randomly choose true or false
+          return acc;
+        },
+        {}
+      );
+
+      // Create checkbox values for the random selections
+      const checkboxValues = [
+        ...Object.entries(randomGender),
+        ...Object.entries(randomEthnicities),
+        ...Object.entries(randomGroomingOptions),
+      ].map(([name, checked]) => `${name}*${checked ? 1 : 0}`);
+
+      const ageRange = `Agemin*${randomAge}, Agemax*${randomAge}`;
+      const result = [...checkboxValues, ageRange].join(", ");
+
+      console.log("result", result)
+
+      handleSendCommands({ randomize: result });
+      handleSendCommands({ assetname: "Studio_makeUp" });
+
+      const randomBackgroundIndex = Math.floor(
+        Math.random() * backgroundAssets.length
+      );
+      const selectedBackground = backgroundAssets[randomBackgroundIndex];
+      handleSendCommands({ assetname: selectedBackground });
+    }
   };
 
   const toggleMenu = (menu: string) => {
@@ -187,7 +209,7 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
 
   return (
     <div className="artist_mode" id="artist_mode" tabIndex={0}>
-      {isWebRTCConnected && (
+      {!isWebRTCConnected && (
         <div className="loader-overlay">
           <div className="loader">
             <Image
