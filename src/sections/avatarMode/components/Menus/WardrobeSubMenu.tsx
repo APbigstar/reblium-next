@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { FaVenus, FaMars } from "react-icons/fa";
+import { useSelectedMenuItemStore } from "@/store/selectedMenuItem"; // Import the store
 
 interface WardrobeSubMenuProps {
   handleSendCommands: (command: Record<string, string>) => Promise<boolean>;
@@ -63,6 +64,8 @@ const WardrobeSubMenu: React.FC<WardrobeSubMenuProps> = ({
     (option) => option.gender === activeGender
   );
 
+  const setWardrobe = useSelectedMenuItemStore((state) => state.setWardrobe); // Get the setWardrobe method
+
   return (
     <ul id="wardrobeSubMenu" className="sub-menu">
       <li>
@@ -110,6 +113,7 @@ const WardrobeSubMenu: React.FC<WardrobeSubMenuProps> = ({
                     onClick={() => {
                       handleSendCommands(option.command);
                       setActiveOption(index);
+                      setWardrobe(option.command.assetname); // Set selected wardrobe in store
                     }}
                   >
                     <Image

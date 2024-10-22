@@ -93,10 +93,10 @@ const UIComponent = () => {
   const handleCancelPremium = async () => {
     try {
       await cancelUserMembershipPlan(subscription?.id);
-      toast.success("Subscription cancelled successfully");
+      toast.info("Subscription cancelled successfully");
       await refetchUserData();
     } catch (error) {
-      toast.success("Subscription cancelled successfully");
+      toast.error("Subscription cancelled successfully");
       alert("Failed to cancel subscription");
     }
   };
@@ -182,7 +182,7 @@ const UIComponent = () => {
       }
     } catch (error) {
       console.error("Error in handleCreditPay:", error);
-      toast.success("Failed to add credit");
+      toast.error("Failed to add credit");
       // Handle the error appropriately, e.g., show a user-friendly message
       throw error; // Re-throw if you want calling code to handle it
     }

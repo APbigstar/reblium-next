@@ -64,7 +64,7 @@ const Sidebar: React.FC = () => {
         {userInfo?.profile_picture ? (
           <Image
             id="userImage"
-            src={`/images/Avatars${userInfo.profile_picture}`}
+            src={`data:image/jpeg;base64,${userInfo.profile_picture}`}
             width={40}
             height={40}
             alt="User"

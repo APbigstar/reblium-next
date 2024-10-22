@@ -7,6 +7,8 @@ import AvatarCard from "./components/AvatarCard";
 import { Avatar } from "@/types/type";
 import { useRouter } from "next/navigation";
 import { useCreateModeStore } from "@/store/createModeStore";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const ProfileView: React.FC = () => {
   const router = useRouter();
@@ -49,60 +51,11 @@ const ProfileView: React.FC = () => {
       if (!response.ok) {
         throw new Error("Failed to fetch avatars");
       }
-      // const data: Avatar[] = await response.json();
-      // setAvatars(data);
-      setAvatars([
-        {
-          id: 1,
-          name: "Avatar 1",
-          image: "avatar_1.png",
-          avatar: "avatar_1.png",
-          user_id: 1,
-          slider_value: "1",
-          prompt: "Avatar 1",
-          submission_time: "2024-02-20T12:00:00Z",
-        },
-        {
-          id: 2,
-          name: "Avatar 2",
-          image: "avatar_2.png",
-          avatar: "avatar_2.png",
-          user_id: 2,
-          slider_value: "1",
-          prompt: "Avatar 1",
-          submission_time: "2024-02-20T12:00:00Z",
-        },
-        {
-          id: 3,
-          name: "Avatar 3",
-          image: "avatar_3.png",
-          avatar: "avatar_3.png",
-          user_id: 2,
-          slider_value: "1",
-          prompt: "Avatar 1",
-          submission_time: "2024-02-20T12:00:00Z",
-        },
-        {
-          id: 4,
-          name: "Avatar 4",
-          image: "avatar_4.png",
-          avatar: "avatar_4.png",
-          user_id: 2,
-          slider_value: "1",
-          prompt: "Avatar 1",
-          submission_time: "2024-02-20T12:00:00Z",
-        },
-        {
-          id: 5,
-          name: "Avatar 5",
-          image: "avatar_5.png",
-          avatar: "avatar_5.png",
-          user_id: 2,
-          slider_value: "1",
-          prompt: "Avatar 1",
-          submission_time: "2024-02-20T12:00:00Z",
-        },
-      ]);
+      const data: Avatar[] = await response.json();
+      setAvatars(data);
+
+      console.log(data)
+      
     } catch (err) {
       console.error("Error fetching avatars:", err);
     } finally {
@@ -161,8 +114,10 @@ const ProfileView: React.FC = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ profile_image: `/${avatarImage}` }),
+        body: JSON.stringify({ profile_image: `${avatarImage}` }),
       });
+
+      console.log(avatarImage)
 
       if (!response.ok) {
         throw new Error("Failed to update user data");
@@ -193,25 +148,31 @@ const ProfileView: React.FC = () => {
         throw new Error("No token found");
       }
 
-      // const response = await fetch(`/api/avatars/${avatarId}`, {
-      //   method: 'PUT',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${token}`
-      //   },
-      //   body: JSON.stringify({ name: newName })
-      // });
+      const response = await fetch(`/api/avatars`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ rename: newName, id: avatarId })
+      });
 
-      // if (!response.ok) {
-      //   throw new Error('Failed to rename avatar');
-      // }
+      const {message, success } = await response.json();
 
-      // Update the local state
-      setAvatars((prevAvatars) =>
-        prevAvatars.map((avatar) =>
-          avatar.id === avatarId ? { ...avatar, name: newName } : avatar
-        )
-      );
+      console.log(message, success)
+
+      if (success) {
+        if (success) {
+          toast.success(message);
+          setAvatars((prevAvatars) =>
+            prevAvatars.map((avatar) =>
+              avatar.id === avatarId ? { ...avatar, name: newName } : avatar
+            )
+          );
+        } else {
+          toast.error("Failed to delete avatar");
+        }
+      }
     } catch (err) {
       console.error("Failed to rename avatar:", err);
     }
@@ -224,25 +185,34 @@ const ProfileView: React.FC = () => {
         throw new Error("No token found");
       }
 
-      // const response = await fetch(`/api/avatars/${avatarId}`, {
-      //   method: 'DELETE',
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`
-      //   }
-      // });
+      const response = await fetch(`/api/avatars?id=${avatarId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
-      // if (!response.ok) {
-      //   throw new Error('Failed to delete avatar');
-      // }
+      const {success, message} = await response.json(); // Await the promise
 
-      // Remove the deleted avatar from the local state
-      setAvatars((prevAvatars) =>
-        prevAvatars.filter((avatar) => avatar.id !== avatarId)
-      );
+      if (success) {
+        toast.success(message);
+        setAvatars((prevAvatars) =>
+          prevAvatars.filter((avatar) => avatar.id !== avatarId)
+        );
+      } else {
+        toast.error("Failed to delete avatar");
+      }
     } catch (err) {
       console.error("Failed to delete avatar:", err);
     }
   };
+
+  const handleEditAvatar = async (avatarId: number): Promise<void> => {
+    console.log("AvatarId", avatarId, "UserId", localStorage.getItem('user_id'));
+    localStorage.setItem('avatar_id', avatarId.toString())
+    localStorage.setItem('create_mode', 'unset')
+    router.push("/avatarMode");
+  }
 
   if (loading) return <div>Loading...</div>;
   if (!isAuthenticated) return <div>Not authenticated</div>;
@@ -255,8 +225,7 @@ const ProfileView: React.FC = () => {
         <div className="profile_picture mb-4">
           {userInfo.profile_picture ? (
             <Image
-              // src={`data:image/jpeg;base64,${userInfo.profile_picture}`}
-              src={`/images/Avatars${userInfo.profile_picture}`}
+              src={`data:image/jpeg;base64,${userInfo.profile_picture}`}
               alt="Profile Avatar"
               width={200}
               height={200}
@@ -324,11 +293,17 @@ const ProfileView: React.FC = () => {
                 onSetProfileAvatar={handleSetProfileAvatar}
                 onRenameAvatar={handleRenameAvatar}
                 onDeleteAvatar={handleDeleteAvatar}
+                onEditAvatar={handleEditAvatar}
               />
             ))}
           </div>
         )}
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+      />
     </div>
   );
 };

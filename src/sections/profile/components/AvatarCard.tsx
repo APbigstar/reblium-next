@@ -7,9 +7,10 @@ export interface AvatarCardProps {
   onSetProfileAvatar: (avatarImage: string) => Promise<void>;
   onRenameAvatar: (avatarId: number, newName: string) => Promise<void>;
   onDeleteAvatar: (avatarId: number) => Promise<void>;
+  onEditAvatar: (avatarId: number) => Promise<void>;
 }
 
-const AvatarCard: React.FC<AvatarCardProps> = ({ avatar, onSetProfileAvatar, onRenameAvatar, onDeleteAvatar }) => {
+const AvatarCard: React.FC<AvatarCardProps> = ({ avatar, onSetProfileAvatar, onRenameAvatar, onDeleteAvatar, onEditAvatar }) => {
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const [isRenaming, setIsRenaming] = useState<boolean>(false);
   const [newName, setNewName] = useState<string>(avatar.name);
@@ -40,13 +41,13 @@ const AvatarCard: React.FC<AvatarCardProps> = ({ avatar, onSetProfileAvatar, onR
     }
   };
 
-  // const avatarSrc = avatar.image
-  //   ? `data:image/jpeg;base64,${avatar.image}`
-  //   : "/images/default_avatar.png";
-
-  const avatarSrc = avatar.avatar
-    ? `/images/Avatars/${avatar.image}`
+  const avatarSrc = avatar.image
+    ? `data:image/jpeg;base64,${avatar.image}`
     : "/images/default_avatar.png";
+
+  // const avatarSrc = avatar.avatar
+  //   ? `/images/Avatars/${avatar.image}`
+  //   : "/images/default_avatar.png";
 
   const handleDelete = () => {
     console.log("Avatar ID", avatar.id);
@@ -57,8 +58,7 @@ const AvatarCard: React.FC<AvatarCardProps> = ({ avatar, onSetProfileAvatar, onR
   };
 
   const handleEdit = () => {
-    console.log("Avatar ID", avatar.id);
-    console.log("User ID", localStorage.getItem('user_id'));
+    onEditAvatar(avatar.id)
   }
 
   return (

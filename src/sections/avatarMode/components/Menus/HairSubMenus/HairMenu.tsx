@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { useSelectedMenuItemStore } from "@/store/selectedMenuItem"; // Import the store
 
 interface HairMenuProps {
   handleSendCommands: (command: Record<string, string>) => Promise<boolean>;
@@ -10,6 +11,7 @@ const HairMenu: React.FC<HairMenuProps> = ({ handleSendCommands }) => {
   const [length, setLength] = useState(1);
   const [blend, setBlend] = useState(0.2);
   const [melanin, setMelanin] = useState(0.1);
+  const setHair = useSelectedMenuItemStore((state) => state.setHair); // Get the setHair method
 
   const hairOptions = [
     { src: "/images/Hair/Icon_Hair_08_v2.PNG", command: { assetname: 'hair_08_v2' } },
@@ -54,6 +56,7 @@ const HairMenu: React.FC<HairMenuProps> = ({ handleSendCommands }) => {
               onClick={() => {
                 handleSendCommands(option.command);
                 setActiveOption(index);
+                setHair(option.command.assetname); // Set selected hair in store
               }}
             >
               <Image src={option.src} alt={`Hair option ${index}`} width={50} height={50} />

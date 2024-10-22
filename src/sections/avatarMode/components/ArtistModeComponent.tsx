@@ -29,6 +29,9 @@ import WardrobeSubMenu from "./Menus/WardrobeSubMenu";
 import { PopupType } from "@/types/type";
 
 import { assetNames, backgroundAssets } from "../Constant";
+import { useSelectedMenuItemStore } from "@/store/selectedMenuItem";
+
+import { UserContext } from "@/provider/UserContext";
 
 interface ArtistModeProps {
   selectedMode: string;
@@ -65,6 +68,9 @@ const useFullscreen = () => {
 };
 
 const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
+
+  const { userInfo, credits, loading, isAuthenticated } = useContext(UserContext);
+
   const [activeMenu, setActiveMenu] = useState("generator");
   const [isAutoCamera, setIsAutoCamera] = useState(true);
   const [lightValue, setLightValue] = useState(0);
@@ -72,6 +78,9 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
   const [showPopup, setShowPopup] = useState(false);
   const [popupType, setPopupType] = useState<PopupType>("");
   const { isFullscreen, toggleFullscreen } = useFullscreen();
+
+  // Access the selected items from the store
+  const selectedItems = useSelectedMenuItemStore((state) => state.items);
 
   const handleOpenPopup = useCallback((type: PopupType) => {
     setPopupType(type);
@@ -104,10 +113,41 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
   ];
 
   useEffect(() => {
+    const createdMode = localStorage.getItem("create_mode");
     handleSendCommands({
-      cameraswitch: "Head",
+      cameraswitch: "body",
     });
+    if (createdMode === "set") {
+      handleRandomizeClick();
+    } else {
+      handleShowingCurrentAvatar();
+    }
   }, []);
+
+  const handleShowingCurrentAvatar = async () => {
+    const avatarId = localStorage.getItem("avatar_id");
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No token found");
+    }
+
+    console.log(avatarId);
+
+    const response = await fetch(`/api/avatars/getAvatar?id=${avatarId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const { data, success } = await response.json();
+
+    if (success) {
+      handleSendCommands({ resetavatar: JSON.stringify(data.avatar) });
+    }
+
+    console.log(data, success);
+  };
 
   const [gender, setGender] = useState<Record<string, boolean>>({
     Male: true,
@@ -177,7 +217,7 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
       const ageRange = `Agemin*${randomAge}, Agemax*${randomAge}`;
       const result = [...checkboxValues, ageRange].join(", ");
 
-      console.log("result", result)
+      console.log("result", result);
 
       handleSendCommands({ randomize: result });
       handleSendCommands({ assetname: "Studio_makeUp" });
@@ -205,6 +245,39 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
     currentAssetIndex = (currentAssetIndex + 1) % assetNames.length;
     const newAssetName = assetNames[currentAssetIndex];
     handleSendCommands({ assetname: newAssetName });
+  };
+
+  const handleSaveAvatar = () => {
+    const createMode = localStorage.getItem("create_mode");
+
+
+    if (createMode === "set") {
+      handleOpenPopup("save-avatar");
+    } else {
+      console.log("Edit Mode", credits);
+      const avatarId = localStorage.getItem("avatar_id");
+      if (selectedItems.hair || selectedItems.wardrobe) {
+        if (selectedItems.hair && selectedItems.wardrobe) {
+          console.log('a')
+        }
+        handleOpenPopup('pay-credit')
+      } else {
+        handleSendCommands({ saveavatar: avatarId });
+      }
+    }
+  };
+
+  const handleBuyCredits = (price: number) => {
+    // Logic to handle buying credits
+    console.log(`Buying credits: €${price}`);
+    setShowPopup(false);
+    setPopupType("");
+  };
+
+  const handlePayCreditAndSaveAvatar = (price: number) => {
+    console.log(`Buying credits: €${price}`);
+    setShowPopup(false);
+    setPopupType("");
   };
 
   return (
@@ -341,7 +414,7 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
           </button>
           <button
             className="flex items-center gap-2 menu-button"
-            onClick={() => handleOpenPopup("save-avatar")}
+            onClick={handleSaveAvatar}
           >
             <FaSave /> <span>Save Avatar</span>
           </button>
@@ -369,7 +442,12 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
       </div>
 
       {showPopup && selectedMode !== "preview" && (
-        <PopupManager type={popupType} onClose={handleClosePopup} />
+        <PopupManager
+          type={popupType}
+          onClose={handleClosePopup}
+          onBuyCredits={handleBuyCredits}
+          onPayCredits={handlePayCreditAndSaveAvatar}
+        />
       )}
     </div>
   );

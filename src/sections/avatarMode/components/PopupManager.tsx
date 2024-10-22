@@ -4,6 +4,8 @@ import { PopupType } from "@/types/type";
 
 import { useWebRTCManager } from "@/lib/webrtcClient";
 
+import { useSelectedMenuItemStore } from "@/store/selectedMenuItem";
+
 interface PopupData {
   type: PopupType;
   apiKey: string;
@@ -21,16 +23,20 @@ interface PopupManagerProps {
   onClose: () => void;
   onConfirm?: (data: PopupData) => void;
   selectedLanguage?: string;
+  onBuyCredits: (price: number) => void;
+  onPayCredits: (price: number) => void;
 }
 
 const PopupManager: React.FC<PopupManagerProps> = ({
   type,
   onClose,
   onConfirm = () => {},
-  selectedLanguage = 'en-us',
+  selectedLanguage = "en-us",
+  onBuyCredits,
+  onPayCredits
 }) => {
   const router = useRouter();
-  
+
   const {
     loadAndSendAvatarData,
     handleSendCommands,
@@ -40,6 +46,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
     getSelectedCommand,
   } = useWebRTCManager();
 
+  const selectedItems = useSelectedMenuItemStore((state) => state.items);
 
   const [formData, setFormData] = useState<PopupData>({
     type,
@@ -95,7 +102,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
       .writeText(formData.shareLink)
       .then(() => {
         console.log("Link copied to clipboard");
-        onConfirm({ ...formData, type: "share" });
+        handleConfirm("share");
       })
       .catch((err) => {
         console.error("Failed to copy link: ", err);
@@ -105,28 +112,28 @@ const PopupManager: React.FC<PopupManagerProps> = ({
   const handleSaveAvatar = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Calling Save Avatar Function");
-    onConfirm({ ...formData, type: "save-avatar" });
+    handleConfirm("save-avatar");
 
     const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("No token found");
-      }
+    if (!token) {
+      throw new Error("No token found");
+    }
 
-    const response = await fetch(
-      "/api/avatars",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          avatarName: formData.avatarName
-        }),
-      }
-    );
+    const response = await fetch("/api/avatars", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        avatarName: formData.avatarName,
+      }),
+    });
 
-    const {insertedId, success} = await response.json();
+    const { insertedId, success } = await response.json();
+
+    console.log(insertedId);
+
     if (success) {
       handleSendCommands({ saveavatar: insertedId });
     }
@@ -142,6 +149,12 @@ const PopupManager: React.FC<PopupManagerProps> = ({
 
   const handleConfirm = (type: PopupType) => {
     onConfirm({ ...formData, type: type });
+  };
+
+  const handleExistFunction = () => {
+    router.push("/profile");
+    localStorage.removeItem("create_mode");
+    localStorage.removeItem("avatar_id");
   };
 
   const renderChatSetting = () => (
@@ -175,7 +188,11 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             onChange={handleInputChange}
           ></textarea>
         </div>
-        <button type="button" id="personaConfirmButton" onClick={() => handleConfirm('chat-setting')}>
+        <button
+          type="button"
+          id="personaConfirmButton"
+          onClick={() => handleConfirm("chat-setting")}
+        >
           Save
         </button>
       </form>
@@ -198,7 +215,11 @@ const PopupManager: React.FC<PopupManagerProps> = ({
           value={formData.apiKey}
           onChange={handleInputChange}
         />
-        <button type="button" id="apiKeyConfirmButton" onClick={() => handleConfirm('chatgpt-key')}>
+        <button
+          type="button"
+          id="apiKeyConfirmButton"
+          onClick={() => handleConfirm("chatgpt-key")}
+        >
           Confirm
         </button>
       </form>
@@ -222,7 +243,9 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             <div
               key={voice.value}
               className={`voice-option ${
-                formData.selectedVoice === voice.value ? "selected" : "bg-gray-800"
+                formData.selectedVoice === voice.value
+                  ? "selected"
+                  : "bg-gray-800"
               }`}
               onClick={() => handleVoiceSelect(voice.value)}
             >
@@ -230,7 +253,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             </div>
           ))}
         </ul>
-        <button type="button" onClick={() => handleConfirm('voice')}>
+        <button type="button" onClick={() => handleConfirm("voice")}>
           Confirm
         </button>
       </form>
@@ -259,7 +282,9 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             <div
               key={language.code}
               className={`language-option ${
-                formData.selectedLanguage === language.lang ? "selected" : "bg-gray-800"
+                formData.selectedLanguage === language.lang
+                  ? "selected"
+                  : "bg-gray-800"
               }`}
               onClick={() => handleLanguageSelect(language.lang)}
             >
@@ -267,7 +292,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             </div>
           ))}
         </ul>
-        <button type="button" onClick={() => handleConfirm('language')}>
+        <button type="button" onClick={() => handleConfirm("language")}>
           Confirm
         </button>
       </form>
@@ -302,7 +327,11 @@ const PopupManager: React.FC<PopupManagerProps> = ({
         >
           File uploaded successfully!
         </p>
-        <button type="button" id="dhsConfirmButton" onClick={() => handleConfirm('upload-avatar')}>
+        <button
+          type="button"
+          id="dhsConfirmButton"
+          onClick={() => handleConfirm("upload-avatar")}
+        >
           Upload
         </button>
       </form>
@@ -343,7 +372,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
           <button
             id="save-exit"
             className="save-exit"
-            onClick={() => router.push("/profile")}
+            onClick={handleExistFunction}
           >
             Yes
           </button>
@@ -381,6 +410,136 @@ const PopupManager: React.FC<PopupManagerProps> = ({
     </div>
   );
 
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+
+  const handleCreditSelection = (amount: number) => {
+    setSelectedAmount(amount);
+  };
+
+  const handlePayment = () => {
+    if (selectedAmount) {
+      onBuyCredits(selectedAmount); // Call the onBuyCredits function with the selected amount
+    }
+  };
+
+  const creditBuy = () => {
+    <div
+      id="buyCreditsConfirmation"
+      className="modal-exit"
+      style={{ width: "60%", backgroundColor: "unset" }}
+    >
+      <div className="modal-content-exit credit_card_modal">
+        <div className="credit_amount_section credit_section">
+          <h3 className="credit_modal_title">BUY CREDITS</h3>
+          {[12, 30, 60, 96].map((price) => (
+            <button
+              key={price}
+              className={`credit-button ${
+                selectedAmount === price ? "selected" : ""
+              }`}
+              onClick={() => handleCreditSelection(price)}
+            >
+              {price === 12
+                ? "100 (€12)"
+                : price === 30
+                ? "250 (€30)"
+                : price === 60
+                ? "500 (€60)"
+                : "800 (€96)"}
+            </button>
+          ))}
+          <button className="cancel-button" onClick={onClose}>
+            CANCEL
+          </button>
+        </div>
+
+        {selectedAmount && (
+          <div className="credit_amount_view_section credit_section">
+            <div>
+              <h2 className="total-price">€{selectedAmount}</h2>
+              <div className="price-breakdown">
+                <span>Buy credit</span>
+                <span className="credit-amount">€{selectedAmount}</span>
+              </div>
+              <div className="price-breakdown">
+                <span>Subtotal</span>
+                <span className="sub-credit-amount">€{selectedAmount}</span>
+              </div>
+              <button className="promo-code-button">Add promo code</button>
+              <div className="total-due">
+                <span>Total due</span>
+                <span className="total-credit-amount">€{selectedAmount}</span>
+              </div>
+            </div>
+            <p className="powered-by">Powered by Stripe</p>
+          </div>
+        )}
+
+        <div className="credit_card_detail_section credit_section">
+          <h3 className="section-title">Pay with card</h3>
+          <div className="card-input">
+            <input
+              id="credit_card_user_email"
+              type="email"
+              placeholder="Email"
+            />
+            <div
+              id="card-element"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            ></div>
+            <div id="card-errors" className="mt-2 text-red-600 text-sm"></div>
+          </div>
+          <button
+            id="deposit-button"
+            className="pay-button"
+            onClick={handlePayment}
+          >
+            Pay now
+          </button>
+          <p className="terms">
+            By providing your card information, you allow [YOUR STRIPE ACCOUNT
+            NAME] to charge your card for future payments in accordance with
+            their terms*.
+          </p>
+        </div>
+      </div>
+    </div>;
+  };
+
+  const creditPay = () => {
+    <div id="saveAvatarConfirmation" className="modal-exit px-8">
+      <div className="modal-content-exit">
+        <h2 style={{ fontSize: "25px" }}>Charged Credits</h2>
+        <ul
+          className="charged_credit_list mb-4"
+          style={{ listStyleType: "disc", textAlign: "left" }}
+        >
+          {selectedItems.hair && <li>HAIR Credit Amount: {2}</li>}
+          {selectedItems.wardrobe && <li>WARDROBE Credit Amount: {3}</li>}
+        </ul>
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            className="save-exit menu-button"
+            onClick={() =>
+              onPayCredits(
+                selectedItems.hair && selectedItems.wardrobe
+                  ? 5
+                  : selectedItems.hair
+                  ? 2
+                  : 3
+              )
+            }
+          >
+            Save
+          </button>
+          <button className="exit" onClick={onClose}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>;
+  };
+
   const renderContent = () => {
     switch (type) {
       case "chat-setting":
@@ -399,6 +558,10 @@ const PopupManager: React.FC<PopupManagerProps> = ({
         return renderExit();
       case "save-avatar":
         return renderSaveAvatar();
+      case "pay-credit":
+        return creditPay();
+      case "buy-credit":
+        return creditBuy();
       default:
         return null;
     }

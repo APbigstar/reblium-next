@@ -7,7 +7,7 @@ export type Avatar = {
   slider_value: string;
   prompt: string;
   submission_time: string;
-  insertId: number;
+  insertId?: number;
 }
 
 export type User = {
@@ -72,4 +72,6 @@ export type PopupType =
   | "share"
   | "exit"
   | "save-avatar"
+  | "pay-credit"
+  | "buy-credit"
   | "";

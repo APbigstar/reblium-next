@@ -19,21 +19,7 @@ export async function GET(req: NextRequest) {
       [userId]
     );
 
-    // Process the avatars to parse JSON fields
-    const processedAvatars = avatars.map((avatar) => ({
-      ...avatar,
-      avatar:
-        typeof avatar.avatar === "string"
-          ? JSON.parse(avatar.avatar)
-          : avatar.avatar,
-      slider_value:
-        typeof avatar.slider_value === "string"
-          ? JSON.parse(avatar.slider_value)
-          : avatar.slider_value,
-      submission_time: new Date(avatar.submission_time).toISOString(),
-    }));
-
-    return NextResponse.json(processedAvatars);
+    return NextResponse.json(avatars);
   } catch (error) {
     console.error("Error fetching avatars:", error);
     return NextResponse.json(
@@ -67,8 +53,16 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const { id, image, avatar } = await req.json();
+    const { id, image, avatar, rename } = await req.json(); // Added rename parameter
 
+    if (rename) {
+      // Handle renaming avatar
+      const renameAvatarQuery = "UPDATE Avatars SET name = ? WHERE id = ?";
+      await query(renameAvatarQuery, [rename, id]);
+      return NextResponse.json({ success: true, message: "Updated Avatar Name Successfully !" });
+    }
+
+    // Existing update logic for image and avatar
     const updateUserAvatar =
       "UPDATE Avatars SET image = ?, avatar = ?, submission_time = ? WHERE id = ?";
     await query(updateUserAvatar, [image, avatar, new Date(), id]);
@@ -78,6 +72,35 @@ export async function PUT(req: NextRequest) {
     console.error("Error processing the request:", error);
     return NextResponse.json(
       { error: "Error processing the request" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url); 
+    const id = searchParams.get("id"); 
+    
+    const userId = await verifyToken(req);
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    // First, delete from User_Chat_Setting where avatar_id and user_id match
+    const deleteAvatarChatSettingQuery = 'DELETE FROM User_Chat_Setting WHERE avatar_id = ? AND user_id = ?';
+    await query(deleteAvatarChatSettingQuery, [id, userId]);
+
+    // Then, delete from Avatar table by avatarId
+    const deleteAvatarQuery = 'DELETE FROM Avatars WHERE id = ?';
+    await query(deleteAvatarQuery, [id]);
+
+    // Return success response
+    return NextResponse.json({ message: 'Avatar deleted successfully!', success: true });
+
+  } catch (error) {
+    console.error('Error executing database query:', error);
+    return NextResponse.json(
+      { error: 'Error processing the request', details: error.message },
       { status: 500 }
     );
   }

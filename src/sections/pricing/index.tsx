@@ -160,10 +160,10 @@ const UIComponent = () => {
   const handleCancelPremium = async () => {
     try {
       await cancelUserMembershipPlan(subscription?.id);
-      toast.success("Subscription cancelled successfully");
+      toast.info("Subscription cancelled successfully");
       await refetchUserData();
     } catch (error) {
-      toast.success("Failed to cancel subscription");
+      toast.error("Failed to cancel subscription");
       alert("Failed to cancel subscription");
     }
   };
