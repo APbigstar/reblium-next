@@ -60,7 +60,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         creditsResponse.json(),
         subscriptionResponse.json(),
       ]);
-      console.log("Fetched user data:", userData);
       setUserInfo(userData);
       setCredits(creditsData.amount || 0);
       setSubscription(subscriptionData);

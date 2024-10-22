@@ -13,6 +13,8 @@ import {
   FaLock,
 } from "react-icons/fa";
 
+import Stripe from "@/provider/Stripe";
+
 import { useWebRTCManager } from "@/lib/webrtcClient";
 
 import PopupManager from "./PopupManager";
@@ -32,6 +34,9 @@ import { assetNames, backgroundAssets } from "../Constant";
 import { useSelectedMenuItemStore } from "@/store/selectedMenuItem";
 
 import { UserContext } from "@/provider/UserContext";
+
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface ArtistModeProps {
   selectedMode: string;
@@ -67,9 +72,8 @@ const useFullscreen = () => {
   return { isFullscreen, toggleFullscreen };
 };
 
-const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
-
-  const { userInfo, credits, loading, isAuthenticated } = useContext(UserContext);
+const ArtistUIModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
+  const { credits, refetchUserData } = useContext(UserContext);
 
   const [activeMenu, setActiveMenu] = useState("generator");
   const [isAutoCamera, setIsAutoCamera] = useState(true);
@@ -81,6 +85,8 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
 
   // Access the selected items from the store
   const selectedItems = useSelectedMenuItemStore((state) => state.items);
+  const setHair = useSelectedMenuItemStore((state) => state.setHair);
+  const setWardrobe = useSelectedMenuItemStore((state) => state.setWardrobe);
 
   const handleOpenPopup = useCallback((type: PopupType) => {
     setPopupType(type);
@@ -114,9 +120,7 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
 
   useEffect(() => {
     const createdMode = localStorage.getItem("create_mode");
-    handleSendCommands({
-      cameraswitch: "body",
-    });
+
     if (createdMode === "set") {
       handleRandomizeClick();
     } else {
@@ -130,8 +134,6 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
     if (!token) {
       throw new Error("No token found");
     }
-
-    console.log(avatarId);
 
     const response = await fetch(`/api/avatars/getAvatar?id=${avatarId}`, {
       method: "GET",
@@ -149,46 +151,36 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
     console.log(data, success);
   };
 
-  const [gender, setGender] = useState<Record<string, boolean>>({
-    Male: true,
-    Female: true,
-  });
-  const [ethnicities, setEthnicities] = useState<Record<string, boolean>>({
-    "East Asian": false,
-    "Latino/ Hispanic": false,
-    "South Asian/ Indian": false,
-    "Middle Eastern": false,
-    "European/ Caucasian": false,
-    "Indigenous/ Native American": false,
-    "African/ Caribbean": false,
-  });
-  const [groomingOptions, setGroomingOptions] = useState<
-    Record<string, boolean>
-  >({
-    Hairshort: true,
-    Tattoo: true,
-    Hairmedium: true,
-    Beard: true,
-    Hairlong: true,
-    Mustache: true,
-    Haircolor: true,
-    Eyescolor: true,
-    Scene: false,
-    Look: false,
-  });
-
-  const [age, setAge] = useState(35);
-
   const handleRandomizeClick = () => {
     console.log("Clicked Handle Randomize Button");
+    const gender = {
+      Male: true,
+      Female: true,
+    };
+    const ethnicities = {
+      "East Asian": false,
+      "Latino/ Hispanic": false,
+      "South Asian/ Indian": false,
+      "Middle Eastern": false,
+      "European/ Caucasian": false,
+      "Indigenous/ Native American": false,
+      "African/ Caribbean": false,
+    };
+    const groomingOptions = {
+      Hairshort: true,
+      Tattoo: true,
+      Hairmedium: true,
+      Beard: true,
+      Hairlong: true,
+      Mustache: true,
+      Haircolor: true,
+      Eyescolor: true,
+      Scene: false,
+      Look: false,
+    };
+    const randomAge = Math.floor(Math.random() * 100) + 1;
 
     if (isWebRTCConnected) {
-      const randomAge = Math.floor(Math.random() * 100) + 1;
-
-      // Update the age state first
-      setAge(randomAge);
-
-      // Generate new values for gender, ethnicities, and grooming options
       const randomGender = Object.keys(gender).reduce((acc, key) => {
         acc[key] = Math.random() < 0.5; // Randomly choose true or false
         return acc;
@@ -216,8 +208,6 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
 
       const ageRange = `Agemin*${randomAge}, Agemax*${randomAge}`;
       const result = [...checkboxValues, ageRange].join(", ");
-
-      console.log("result", result);
 
       handleSendCommands({ randomize: result });
       handleSendCommands({ assetname: "Studio_makeUp" });
@@ -249,35 +239,101 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
 
   const handleSaveAvatar = () => {
     const createMode = localStorage.getItem("create_mode");
-
+    const avatarId = localStorage.getItem("avatar_id");
 
     if (createMode === "set") {
       handleOpenPopup("save-avatar");
     } else {
-      console.log("Edit Mode", credits);
-      const avatarId = localStorage.getItem("avatar_id");
-      if (selectedItems.hair || selectedItems.wardrobe) {
-        if (selectedItems.hair && selectedItems.wardrobe) {
-          console.log('a')
-        }
-        handleOpenPopup('pay-credit')
-      } else {
-        handleSendCommands({ saveavatar: avatarId });
-      }
+      handleSendCommands({ saveavatar: avatarId });
     }
   };
 
-  const handleBuyCredits = (price: number) => {
-    // Logic to handle buying credits
-    console.log(`Buying credits: €${price}`);
-    setShowPopup(false);
-    setPopupType("");
+  const handleCreateAvatar = async (avatarName: string) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No token found");
+    }
+
+    const response = await fetch("/api/avatars", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        avatarName: avatarName,
+      }),
+    });
+
+    const { insertedId, success } = await response.json();
+
+    if (success) {
+      handleSendCommands({ saveavatar: insertedId });
+    }
   };
 
-  const handlePayCreditAndSaveAvatar = (price: number) => {
-    console.log(`Buying credits: €${price}`);
-    setShowPopup(false);
-    setPopupType("");
+  const handleAvatarSaveButtonClick = async () => {
+    const curCreditAmount = +credits;
+
+    const creditThresholds = {
+      both: 5,
+      hair: 2,
+      wardrobe: 3,
+    };
+
+    if (selectedItems.hair || selectedItems.wardrobe) {
+      const hasHair = selectedItems.hair;
+      const hasWardrobe = selectedItems.wardrobe;
+
+      const thresholdKey =
+        hasHair && hasWardrobe ? "both" : hasHair ? "hair" : "wardrobe";
+
+      if (curCreditAmount > creditThresholds[thresholdKey]) {
+        handleOpenPopup("pay-credit");
+      } else {
+        console.log("showing buy credit modal");
+        handleOpenPopup("buy-credit");
+      }
+    } else {
+      handleSaveAvatar();
+    }
+  };
+
+  const handlePayCreditAndSaveAvatar = async (creditAmount: number) => {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("No token found");
+    const response = await fetch("/api/credit", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        amount: -creditAmount,
+        premium: "",
+      }),
+    });
+
+    const res = await response.json();
+
+    if (res.success) {
+      setShowPopup(false);
+      setPopupType("");
+      handleClearAndSaveAvatar();
+    } else {
+      console.error("Failed to update credit amount:", res.error);
+    }
+  };
+
+  const handleClearAndSaveAvatar = () => {
+    refetchUserData();
+    handleSaveAvatar();
+    setHair("");
+    setWardrobe("");
+  };
+
+  const showToast = (message: string) => {
+    toast.success(message); 
   };
 
   return (
@@ -414,7 +470,7 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
           </button>
           <button
             className="flex items-center gap-2 menu-button"
-            onClick={handleSaveAvatar}
+            onClick={handleAvatarSaveButtonClick}
           >
             <FaSave /> <span>Save Avatar</span>
           </button>
@@ -445,11 +501,27 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
         <PopupManager
           type={popupType}
           onClose={handleClosePopup}
-          onBuyCredits={handleBuyCredits}
           onPayCredits={handlePayCreditAndSaveAvatar}
+          onCreateAvatar={handleCreateAvatar}
+          onSaveAvatar={handleAvatarSaveButtonClick}
+          showToast={showToast}
         />
       )}
+
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+      />
     </div>
+  );
+};
+
+const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
+  return (
+    <Stripe>
+      <ArtistUIModeComponent selectedMode={selectedMode} />
+    </Stripe>
   );
 };
 

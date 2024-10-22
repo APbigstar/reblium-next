@@ -1,8 +1,6 @@
 import { WebRTCClient, WebRTCClientProps } from "@arcware/webrtc-plugin";
 import { RefObject } from "react";
 
-import { backgroundAssets } from "@/sections/avatarMode/Constant";
-
 type WebRTCClientOptions = Omit<WebRTCClientProps, "sizeContainer"> & {
   sizeContainer: HTMLElement;
   container: HTMLElement;
@@ -66,8 +64,6 @@ class WebRTCManager {
       setIsLoading
     );
     this.webRTCClient = new WebRTCClient(this.options);
-    console.log("WebRTCCLIENT_______", this.webRTCClient)
-    console.log("WebRTCCLIENT_______111111", !!(this.webRTCClient))
     this.audioRef = audioRef.current;
     this.setupVideoDetection(videoContainerRef);
   }
@@ -94,7 +90,7 @@ class WebRTCManager {
   ): WebRTCClientOptions {
     return {
       address: "wss://signalling-client.ragnarok.arcware.cloud/",
-      shareId: "share-79f09605-3edc-4fa8-b5b9-49a7a3a5f25b",
+      shareId: process.env.NEXT_PUBLIC_ARCWARE_SHARE_ID,
       packageId: "",
       settings: {},
       playOverlay: false,
@@ -143,7 +139,7 @@ class WebRTCManager {
       if (!this.videoLoaded) {
         this.videoLoaded = true;
         this.videoLoadedResolver?.();
-        this.handleSendCommands({ autocamera: "Yes" });
+        this.handleSendCommands({ cameraswitch: "head" });
       }
     };
 
@@ -208,7 +204,7 @@ class WebRTCManager {
   }
 
   public isWebRTCConnected(): boolean {
-    console.log("WebRTCCLIENT_______2222222222", this.webRTCClient)
+    console.log("WebRTCCLIENT_______2222222222", this.webRTCClient);
 
     return !!(
       this.webRTCClient &&
@@ -217,8 +213,6 @@ class WebRTCManager {
       ).socket?.ready()
     );
   }
-
- 
 
   public getLastResponse(): string | null {
     return this.lastResponse;

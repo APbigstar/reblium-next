@@ -1759,7 +1759,7 @@ p.category-title-top {
   left: 50%;
   transform: translate(-50%, -50%);
   background-color: rgba(255, 255, 255, 0.5);
-  padding: 20px;
+  padding: 20px 50px;
   border-radius: 5px;
   z-index: 99999;
 }
@@ -3077,7 +3077,7 @@ table th {
 }
 
 .credit_card_detail_section {
-  background: white;
+  background: black;
 }
 
 .section-title {
@@ -3116,7 +3116,7 @@ table th {
 
 .terms {
   font-size: 12px;
-  color: #666;
+  color: white;
   margin-top: 20px;
 }
 

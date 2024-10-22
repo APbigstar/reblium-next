@@ -1,10 +1,16 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { PopupType } from "@/types/type";
 
 import { useWebRTCManager } from "@/lib/webrtcClient";
 
 import { useSelectedMenuItemStore } from "@/store/selectedMenuItem";
+
+import { UserContext } from "@/provider/UserContext";
+
+import usePayStripeCardPayment from "@/hooks/use-pay-stripe-card-payment";
+
+import CardElement from "@/components/StripeCard";
 
 interface PopupData {
   type: PopupType;
@@ -23,8 +29,10 @@ interface PopupManagerProps {
   onClose: () => void;
   onConfirm?: (data: PopupData) => void;
   selectedLanguage?: string;
-  onBuyCredits: (price: number) => void;
-  onPayCredits: (price: number) => void;
+  onPayCredits?: (creditAmount: number) => void;
+  onSaveAvatar?: () => void;
+  onCreateAvatar?: (avatarName: string) => void;
+  showToast?: (message: string) => void;
 }
 
 const PopupManager: React.FC<PopupManagerProps> = ({
@@ -32,8 +40,10 @@ const PopupManager: React.FC<PopupManagerProps> = ({
   onClose,
   onConfirm = () => {},
   selectedLanguage = "en-us",
-  onBuyCredits,
-  onPayCredits
+  onPayCredits,
+  onCreateAvatar,
+  onSaveAvatar,
+  showToast
 }) => {
   const router = useRouter();
 
@@ -47,6 +57,18 @@ const PopupManager: React.FC<PopupManagerProps> = ({
   } = useWebRTCManager();
 
   const selectedItems = useSelectedMenuItemStore((state) => state.items);
+  const setHair = useSelectedMenuItemStore((state) => state.setHair);
+  const setWardrobe = useSelectedMenuItemStore((state) => state.setWardrobe);
+
+  const payStripeCardPayment = usePayStripeCardPayment();
+  const {
+    userInfo,
+    credits,
+    loading,
+    isAuthenticated,
+    subscription,
+    refetchUserData,
+  } = useContext(UserContext);
 
   const [formData, setFormData] = useState<PopupData>({
     type,
@@ -109,36 +131,6 @@ const PopupManager: React.FC<PopupManagerProps> = ({
       });
   };
 
-  const handleSaveAvatar = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Calling Save Avatar Function");
-    handleConfirm("save-avatar");
-
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("No token found");
-    }
-
-    const response = await fetch("/api/avatars", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        avatarName: formData.avatarName,
-      }),
-    });
-
-    const { insertedId, success } = await response.json();
-
-    console.log(insertedId);
-
-    if (success) {
-      handleSendCommands({ saveavatar: insertedId });
-    }
-  };
-
   const handleLanguageSelect = (lang: string) => {
     setFormData((prev) => ({ ...prev, selectedLanguage: lang }));
   };
@@ -155,6 +147,13 @@ const PopupManager: React.FC<PopupManagerProps> = ({
     router.push("/profile");
     localStorage.removeItem("create_mode");
     localStorage.removeItem("avatar_id");
+    setWardrobe("");
+    setHair("");
+  };
+
+  const handleSaveAvatar = () => {
+    handleConfirm("save-avatar");
+    onCreateAvatar(formData.avatarName);
   };
 
   const renderChatSetting = () => (
@@ -410,134 +409,231 @@ const PopupManager: React.FC<PopupManagerProps> = ({
     </div>
   );
 
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
-
-  const handleCreditSelection = (amount: number) => {
-    setSelectedAmount(amount);
-  };
-
-  const handlePayment = () => {
-    if (selectedAmount) {
-      onBuyCredits(selectedAmount); // Call the onBuyCredits function with the selected amount
-    }
-  };
-
   const creditBuy = () => {
-    <div
-      id="buyCreditsConfirmation"
-      className="modal-exit"
-      style={{ width: "60%", backgroundColor: "unset" }}
-    >
-      <div className="modal-content-exit credit_card_modal">
-        <div className="credit_amount_section credit_section">
-          <h3 className="credit_modal_title">BUY CREDITS</h3>
-          {[12, 30, 60, 96].map((price) => (
-            <button
-              key={price}
-              className={`credit-button ${
-                selectedAmount === price ? "selected" : ""
-              }`}
-              onClick={() => handleCreditSelection(price)}
-            >
-              {price === 12
-                ? "100 (€12)"
-                : price === 30
-                ? "250 (€30)"
-                : price === 60
-                ? "500 (€60)"
-                : "800 (€96)"}
+    const [showCardElement, setShowCardElement] = useState(false);
+    const [cardElementState, setCardElementState] = useState({
+      errorMessage: "",
+      complete: false,
+    });
+    const [cardPaymentState, setCardPaymentState] = useState({
+      errorMessage: "",
+    });
+    const [price, setPrice] = useState<number | null>(0);
+    const [amount, setAmount] = useState<number | null>(0);
+    const [isPaying, setIsPaying] = useState<boolean | null>(false);
+    const handleCreditSelection = (price: number, amount: number) => {
+      setShowCardElement(true);
+      setAmount(amount);
+      setPrice(price);
+    };
+
+    const handleCreditPay = async () => {
+      try {
+        setIsPaying(true);
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No token found");
+        }
+
+        const response = await fetch("/api/credit/payment_intent/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            price: price,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.error || "Failed to create payment intent");
+        }
+
+        const paymentIntent = result.data;
+
+        const payResult = await payStripeCardPayment(
+          {
+            client_secret: paymentIntent.client_secret,
+          },
+          {
+            name: "",
+          }
+        );
+
+        if (
+          payResult &&
+          payResult.paymentIntent &&
+          payResult.paymentIntent.status === "succeeded"
+        ) {
+          const confirmResponse = await fetch(
+            "/api/credit/payment_intent/confirm",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                payment_intent_id: payResult.paymentIntent.id,
+                price: price,
+              }),
+            }
+          );
+
+          const confirmResultStatus = await confirmResponse.json();
+          if (confirmResultStatus.success !== true) {
+            throw new Error(
+              confirmResultStatus.error || "Failed to verify payment"
+            );
+          } else {
+            await refetchUserData();
+            setIsPaying(false);
+            setCardPaymentState({ errorMessage: "Payment successful!" });
+            setShowCardElement(false);
+            showToast(`Added ${amount} credits successfully. Please try to save avatar again! `);
+            onClose();
+            // onSaveAvatar();
+          }
+        }
+      } catch (error) {
+        console.error("Error in handleCreditPay:", error);
+        showToast("Failed to add credit");
+        throw error;
+      }
+    };
+    return (
+      <div
+        id="buyCreditsConfirmation"
+        className="modal-exit"
+        style={{ width: "60%", backgroundColor: "unset" }}
+      >
+        <div className="modal-content-exit credit_card_modal">
+          <div className="credit_amount_section credit_section">
+            <h3 className="credit_modal_title">BUY CREDITS</h3>
+            {Object.entries({ 12: 100, 30: 200, 60: 5000, 96: 1000 }).map(
+              ([curPrice, amount]) => (
+                <button
+                  key={price} // Use price as the key
+                  className={`credit-button ${
+                    price === +curPrice ? "selected" : ""
+                  }`} // Convert price to number for comparison
+                  onClick={() => handleCreditSelection(+curPrice, amount)} // Convert price to number
+                >
+                  {amount} (€{curPrice}) {/* Display amount and price */}
+                </button>
+              )
+            )}
+            <button className="cancel-button" onClick={onClose}>
+              CANCEL
             </button>
-          ))}
-          <button className="cancel-button" onClick={onClose}>
-            CANCEL
-          </button>
-        </div>
+          </div>
 
-        {selectedAmount && (
-          <div className="credit_amount_view_section credit_section">
-            <div>
-              <h2 className="total-price">€{selectedAmount}</h2>
-              <div className="price-breakdown">
-                <span>Buy credit</span>
-                <span className="credit-amount">€{selectedAmount}</span>
+          {price && (
+            <div className="credit_amount_view_section credit_section">
+              <div>
+                <h2 className="total-price">€{price}</h2>
+                <div className="price-breakdown">
+                  <span>Buy credit</span>
+                  <span className="credit-amount">€{price}</span>
+                </div>
+                <div className="price-breakdown">
+                  <span>Subtotal</span>
+                  <span className="sub-credit-amount">€{price}</span>
+                </div>
+                <button className="promo-code-button">Add promo code</button>
+                <div className="total-due">
+                  <span>Total due</span>
+                  <span className="total-credit-amount">€{price}</span>
+                </div>
               </div>
-              <div className="price-breakdown">
-                <span>Subtotal</span>
-                <span className="sub-credit-amount">€{selectedAmount}</span>
-              </div>
-              <button className="promo-code-button">Add promo code</button>
-              <div className="total-due">
-                <span>Total due</span>
-                <span className="total-credit-amount">€{selectedAmount}</span>
-              </div>
+              <p className="powered-by">Powered by Stripe</p>
             </div>
-            <p className="powered-by">Powered by Stripe</p>
-          </div>
-        )}
+          )}
 
-        <div className="credit_card_detail_section credit_section">
-          <h3 className="section-title">Pay with card</h3>
-          <div className="card-input">
-            <input
-              id="credit_card_user_email"
-              type="email"
-              placeholder="Email"
-            />
-            <div
-              id="card-element"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-            ></div>
-            <div id="card-errors" className="mt-2 text-red-600 text-sm"></div>
+          <div className="credit_card_detail_section credit_section">
+            <h3 className="section-title">Pay with card</h3>
+            {showCardElement && !subscription?.exists && (
+              <div className="mt-8 max-w-md mx-auto p-6 rounded-lg">
+                <CardElement
+                  onChange={(e) => {
+                    setCardElementState({
+                      errorMessage: e.error ? e.error.message : "",
+                      complete: e.complete,
+                    });
+                    setCardPaymentState({ errorMessage: "" });
+                  }}
+                />
+                {(cardElementState.errorMessage ||
+                  cardPaymentState.errorMessage) && (
+                  <p className="text-red-500 mt-2">
+                    {cardElementState.errorMessage ||
+                      cardPaymentState.errorMessage}
+                  </p>
+                )}
+                <button
+                  className={`w-full bg-blue-standard text-white py-2 rounded-full mt-4 ${
+                    isPaying ? "pointer-events-none" : ""
+                  }`}
+                  onClick={handleCreditPay}
+                  disabled={!cardElementState.complete}
+                >
+                  {isPaying ? "Paying..." : "Pay Now"}
+                </button>
+              </div>
+            )}
+            <p className="terms">
+              By providing your card information, you allow [YOUR STRIPE ACCOUNT
+              NAME] to charge your card for future payments in accordance with
+              their terms*.
+            </p>
           </div>
-          <button
-            id="deposit-button"
-            className="pay-button"
-            onClick={handlePayment}
-          >
-            Pay now
-          </button>
-          <p className="terms">
-            By providing your card information, you allow [YOUR STRIPE ACCOUNT
-            NAME] to charge your card for future payments in accordance with
-            their terms*.
-          </p>
         </div>
       </div>
-    </div>;
+    );
   };
 
   const creditPay = () => {
-    <div id="saveAvatarConfirmation" className="modal-exit px-8">
-      <div className="modal-content-exit">
-        <h2 style={{ fontSize: "25px" }}>Charged Credits</h2>
-        <ul
-          className="charged_credit_list mb-4"
-          style={{ listStyleType: "disc", textAlign: "left" }}
-        >
-          {selectedItems.hair && <li>HAIR Credit Amount: {2}</li>}
-          {selectedItems.wardrobe && <li>WARDROBE Credit Amount: {3}</li>}
-        </ul>
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            className="save-exit menu-button"
-            onClick={() =>
-              onPayCredits(
-                selectedItems.hair && selectedItems.wardrobe
-                  ? 5
-                  : selectedItems.hair
-                  ? 2
-                  : 3
-              )
-            }
+    return (
+      <div id="saveAvatarConfirmation" className="modal-exit px-8">
+        <div className="modal-content-exit">
+          <h2 style={{ fontSize: "25px" }}>Charged Credits</h2>
+          <ul
+            className="charged_credit_list mb-4"
+            style={{ listStyleType: "disc", textAlign: "left" }}
           >
-            Save
-          </button>
-          <button className="exit" onClick={onClose}>
-            Cancel
-          </button>
+            {selectedItems.hair && <li>HAIR Credit Amount: {2}</li>}
+            {selectedItems.wardrobe && <li>WARDROBE Credit Amount: {3}</li>}
+          </ul>
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              className="save-exit menu-button"
+              onClick={() =>
+                onPayCredits(
+                  selectedItems.hair && selectedItems.wardrobe
+                    ? 5
+                    : selectedItems.hair
+                    ? 2
+                    : 3
+                )
+              }
+            >
+              Save
+            </button>
+            <button className="exit" onClick={onClose}>
+              Cancel
+            </button>
+          </div>
         </div>
+        
       </div>
-    </div>;
+    );
   };
 
   const renderContent = () => {

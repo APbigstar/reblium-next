@@ -73,8 +73,6 @@ const UIComponent = () => {
 
       const res = await response.json();
 
-      console.log("Update Status", res);
-
       if (res.success) {
         refetchUserData();
       } else {
