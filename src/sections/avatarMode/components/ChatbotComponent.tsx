@@ -317,9 +317,9 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
           <div
             key={language.code}
             className={`language-option cursor-pointer flex flex-col items-center justify-center p-1.5 ${
-              selectedLanguage === language.lang ? "selected" : ""
+              selectedLanguage === language.code ? "selected" : ""
             }`}
-            onClick={() => onLanguageSelect(language.lang)}
+            onClick={() => onLanguageSelect(language.code)}
           >
             <span
               className={`flag-icon flag-icon-${language.flagClass} text-2xl mb-1.5`}
@@ -472,6 +472,7 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
           selectedLanguage={selectedLanguage}
           onVoiceSelect={onVoiceSelect}
           selectedVoice={selectedVoice}
+          recognition={recognition}
         />
       )}
     </div>

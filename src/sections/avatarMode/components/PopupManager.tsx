@@ -34,6 +34,7 @@ interface PopupManagerProps {
   onSaveAvatar?: () => void;
   onCreateAvatar?: (avatarName: string) => void;
   showToast?: (message: string) => void;
+  recognition?: React.RefObject<any>;
 }
 
 const PopupManager: React.FC<PopupManagerProps> = ({
@@ -48,7 +49,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
   showToast,
   onLanguageSelect,
   onVoiceSelect,
-
+  recognition,
 }) => {
   const router = useRouter();
 
@@ -59,7 +60,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
     isWebRTCConnected,
     getLastResponse,
     getSelectedCommand,
-    cleanup
+    cleanup,
   } = useWebRTCManager();
 
   const selectedItems = useSelectedMenuItemStore((state) => state.items);
@@ -79,7 +80,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
   const [formData, setFormData] = useState<PopupData>({
     type,
     apiKey: "",
-    selectedLanguage: selectedLanguage, 
+    selectedLanguage: selectedLanguage,
     selectedVoice: selectedVoice,
     welcomeMessage: "",
     persona: "",
@@ -137,14 +138,32 @@ const PopupManager: React.FC<PopupManagerProps> = ({
       });
   };
 
-  const handleLanguageSelect = (lang: string) => {
-    setFormData((prev) => ({ ...prev, selectedLanguage: lang }));
-    onLanguageSelect(lang)
+  const handleLanguageSelect = (code: string, lang: string) => {
+    console.log(code, lang)
+    setFormData((prev) => ({ ...prev, selectedLanguage: code }));
+    onLanguageSelect(code);
+    handleSendCommands({
+      personas: `Change your language to this: ${lang}`,
+    });
+
+    if (selectedVoice) {
+      const voiceCode = voiceMappings[code][selectedVoice];
+      handleSendCommands({ voiceid: voiceCode });
+    }
+
+    onClose();
   };
 
   const handleVoiceSelect = (voice: string) => {
     setFormData((prev) => ({ ...prev, selectedVoice: voice }));
-    onVoiceSelect(voice)
+    onVoiceSelect(voice);
+
+    if (selectedLanguage) {
+      const voiceCode = voiceMappings[selectedLanguage][voice];
+      handleSendCommands({ voiceid: voiceCode });
+    }
+
+    onClose();
   };
 
   const handleConfirm = (type: PopupType) => {
@@ -258,9 +277,6 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             </div>
           ))}
         </ul>
-        <button type="button" onClick={onClose}>
-          Close
-        </button>
       </form>
     </div>
   );
@@ -277,12 +293,12 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             <div
               key={language.code}
               className={`language-option flex items-center gap-2 cursor-pointer p-2 ${
-                formData.selectedLanguage === language.lang
+                formData.selectedLanguage === language.code
                   ? "selected"
                   : "bg-gray-800"
               }`}
               onClick={() => {
-                handleLanguageSelect(language.lang);
+                handleLanguageSelect(language.code, language.lang);
               }}
             >
               <span
@@ -292,9 +308,6 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             </div>
           ))}
         </ul>
-        <button type="button" onClick={onClose}>
-          Close
-        </button>
       </form>
     </div>
   );

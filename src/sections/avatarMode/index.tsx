@@ -38,8 +38,8 @@ const AvatarModeUIView = () => {
   const { isMuted, setMuted } = useAudioStore();
 
   const [selectedMode, setSelectedMode] = useState<string>("design");
-  const [selectedLanguage, setSelectedLanguage] = useState("English");
-  const [selectedVoice, setSelectedVoice] = useState("Female1");
+  const [selectedLanguage, setSelectedLanguage] = useState("en-US");
+  const [selectedVoice, setSelectedVoice] = useState("Samantha");
   const [isWebRTCInitialized, setIsWebRTCInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

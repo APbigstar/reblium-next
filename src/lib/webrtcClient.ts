@@ -33,6 +33,7 @@ class WebRTCManager {
   private maxConnectionAttempts = 3;
   private retryTimeout: NodeJS.Timeout | null = null;
   private loadingCallback: ((isLoading: boolean) => void) | null = null;
+  private isProcessingAIMessage: boolean = false;
 
   private constructor() {
     this.resetVideoLoadedPromise();
@@ -127,6 +128,10 @@ class WebRTCManager {
   }
 
   private handleApplicationResponse(response: string): void {
+    if (this.isProcessingAIMessage) {
+      return;
+    }
+
     if (response.startsWith("AI message :")) {
       const messageContent = response.replace("AI message :", "").trim();
       const messageStore = useMessageStore.getState();
@@ -136,8 +141,16 @@ class WebRTCManager {
         messageContent !== messageStore.lastBotMessage &&
         Date.now() - messageStore.messageTimestamp < 5000
       ) {
+        // Set flag to true to ignore subsequent messages
+        this.isProcessingAIMessage = true;
+
         messageStore.setLastBotMessage(messageContent);
         messageStore.setIsProcessingMessage(false);
+
+        // Reset the flag after a short delay to prepare for next user message
+        setTimeout(() => {
+          this.isProcessingAIMessage = false;
+        }, 100);
       }
     }
     this.lastResponse = response;
@@ -169,8 +182,7 @@ class WebRTCManager {
 
       this.webRTCClient = new WebRTCClient(this.options);
       this.setupVideoDetection(videoContainerRef);
-      await this.waitForConnection(),
-      await this.videoLoadedPromise;
+      await this.waitForConnection(), await this.videoLoadedPromise;
 
       this.updateLoadingState(false);
     } catch (error) {
@@ -301,16 +313,17 @@ class WebRTCManager {
   }
 
   public async handleSendCommands(command: Command): Promise<boolean> {
-    // Ensure video is loaded before sending any commands
     await this.videoLoadedPromise;
-
     this.selectedCommand = Object.keys(command)[0];
 
     try {
-      this.webRTCClient?.emitUIInteraction(command);
+      if ('usermessege' in command) {
+        this.isProcessingAIMessage = false;
+      }
       if ("resetavatar" in command) {
         this.latestLoadAvatarCommand = command.resetavatar;
       }
+      this.webRTCClient?.emitUIInteraction(command);
       console.log("Command sent successfully:", command);
       return true;
     } catch (error) {
