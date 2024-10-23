@@ -27,6 +27,7 @@ class WebRTCManager {
   private options: WebRTCClientOptions | null = null;
   private videoElement: HTMLVideoElement | null = null;
   private audioRef: HTMLAudioElement | null = null;
+  private onVideoReadyCallbacks: (() => void)[] = [];
   public defaultAvatarPrompt = false;
 
   private constructor() {
@@ -40,6 +41,14 @@ class WebRTCManager {
       WebRTCManager.instance = new WebRTCManager();
     }
     return WebRTCManager.instance;
+  }
+
+  public onVideoReady(callback: () => void): void {
+    if (this.videoLoaded) {
+      callback();
+    } else {
+      this.onVideoReadyCallbacks.push(callback);
+    }
   }
 
   private handleApplicationResponse(response: string): void {
@@ -81,6 +90,9 @@ class WebRTCManager {
     this.audioRef = audioRef.current;
     this.webRTCClient = new WebRTCClient(this.options);
     this.setupVideoDetection(videoContainerRef);
+
+    // Wait for video to be ready before resolving initialization
+    await this.videoLoadedPromise;
   }
 
   private assertElementsExist(
@@ -139,6 +151,10 @@ class WebRTCManager {
         this.videoLoaded = true;
         this.videoLoadedResolver?.();
         this.handleSendCommands({ cameraswitch: "head" });
+        
+        // Execute all callbacks waiting for video ready
+        this.onVideoReadyCallbacks.forEach(callback => callback());
+        this.onVideoReadyCallbacks = []; // Clear the callbacks
       }
     };
 
@@ -176,6 +192,9 @@ class WebRTCManager {
   }
 
   public async handleSendCommands(command: Command): Promise<boolean> {
+    // Ensure video is loaded before sending any commands
+    await this.videoLoadedPromise;
+    
     this.selectedCommand = Object.keys(command)[0];
     
     try {
@@ -226,5 +245,6 @@ export function useWebRTCManager() {
     isWebRTCConnected: () => webRTCManager.isWebRTCConnected(),
     getLastResponse: () => webRTCManager.getLastResponse(),
     getSelectedCommand: () => webRTCManager.getSelectedCommand(),
+    onVideoReady: (callback: () => void) => webRTCManager.onVideoReady(callback),
   };
 }

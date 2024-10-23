@@ -209,6 +209,7 @@ const ProfileView: React.FC = () => {
 
   const handleEditAvatar = async (avatarId: number): Promise<void> => {
     console.log("AvatarId", avatarId, "UserId", localStorage.getItem('user_id'));
+    console.log("token", localStorage.getItem('token'))
     localStorage.setItem('avatar_id', avatarId.toString())
     localStorage.setItem('create_mode', 'unset')
     router.push("/avatarMode");

@@ -84,6 +84,7 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
     isWebRTCConnected,
     getLastResponse,
     getSelectedCommand,
+    onVideoReady,
   } = useWebRTCManager();
 
   // Access the selected items from the store
@@ -115,12 +116,14 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
   useEffect(() => {
     const createdMode = localStorage.getItem("create_mode");
 
-    console.log(createdMode)
-    if (createdMode === "set") {
-      handleRandomizeClick();
-    } else {
-      handleShowingCurrentAvatar();
-    }
+    onVideoReady(() => {
+      console.log("Video is ready, executing initial commands");
+      if (createdMode === "set") {
+        handleRandomizeClick();
+      } else {
+        handleShowingCurrentAvatar();
+      }
+    });
   }, []);
 
   const handleShowingCurrentAvatar = async () => {
@@ -176,24 +179,23 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
 
     if (isWebRTCConnected) {
       const randomGender = Object.keys(gender).reduce((acc, key) => {
-        acc[key] = Math.random() < 0.5; // Randomly choose true or false
+        acc[key] = Math.random() < 0.5;
         return acc;
       }, {});
 
       const randomEthnicities = Object.keys(ethnicities).reduce((acc, key) => {
-        acc[key] = Math.random() < 0.5; // Randomly choose true or false
+        acc[key] = Math.random() < 0.5;
         return acc;
       }, {});
 
       const randomGroomingOptions = Object.keys(groomingOptions).reduce(
         (acc, key) => {
-          acc[key] = Math.random() < 0.5; // Randomly choose true or false
+          acc[key] = Math.random() < 0.5;
           return acc;
         },
         {}
       );
 
-      // Create checkbox values for the random selections
       const checkboxValues = [
         ...Object.entries(randomGender),
         ...Object.entries(randomEthnicities),
@@ -263,6 +265,7 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
 
     if (success) {
       handleSendCommands({ saveavatar: insertedId });
+      handleClosePopup();
     }
   };
 

@@ -159,7 +159,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
   };
 
   const handleSaveAvatar = () => {
-    handleConfirm("save-avatar");
+    // handleConfirm("save-avatar");
     onCreateAvatar(formData.avatarName);
   };
 
@@ -384,7 +384,6 @@ const PopupManager: React.FC<PopupManagerProps> = ({
 
   const renderSaveAvatar = () => (
     <div id="popup" className="popup">
-      <form id="avatarForm" onSubmit={handleSaveAvatar}>
         <span className="close-button" onClick={onClose}>
           &times;
         </span>
@@ -401,10 +400,9 @@ const PopupManager: React.FC<PopupManagerProps> = ({
           value={formData.avatarName}
           onChange={handleInputChange}
         />
-        <button type="submit" id="confirmButton">
+        <button type="submit" id="confirmButton" onClick={handleSaveAvatar}>
           Confirm
         </button>
-      </form>
     </div>
   );
 
