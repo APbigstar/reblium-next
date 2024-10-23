@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useEffect } from "react";
-import PopupManager from "./PopupManager";
+"use client";
+
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   FaDoorOpen,
   FaSave,
@@ -9,26 +10,30 @@ import {
   FaVolumeUp,
 } from "react-icons/fa";
 import { PopupType } from "@/types/type";
+import { useWebRTCManager } from "@/lib/webrtcClient";
+import { useMessageStore } from "@/store/messageStore";
+import { useAudioStore } from "@/store/audioManager";
+
+import PopupManager from "./PopupManager";
+
+import { languageOptions } from "../Constant";
 
 interface ChatbotProps {
-  selectedLanguage: string;
   isMuted: boolean;
   onMuteToggle: () => void;
-  onLanguageSelect: (lang: string) => void;
   selectedMode: string;
+  onLanguageSelect: (lang: string) => void;
+  selectedLanguage: string;
+  onVoiceSelect: (lang: string) => void;
+  selectedVoice: string;
 }
 
-const languageOptions = [
-  { lang: "English", code: "en-US", flagClass: "us" },
-  { lang: "Dutch", code: "nl-NL", flagClass: "nl" },
-  { lang: "French", code: "fr-FR", flagClass: "fr" },
-  { lang: "Spanish", code: "es-ES", flagClass: "es" },
-  { lang: "German", code: "de-DE", flagClass: "de" },
-  { lang: "Japanese", code: "ja-JP", flagClass: "jp" },
-  { lang: "Mandarin", code: "cmn-Hans-CN", flagClass: "cn" },
-  { lang: "Cantonese", code: "yue-Hant-HK", flagClass: "hk" },
-  { lang: "Arabic", code: "ar-XA", flagClass: "sa" },
-];
+interface ChatMessage {
+  text: string;
+  isUser: boolean;
+  timestamp: Date;
+}
+
 
 const buttonLabels = [
   "Chat Setting",
@@ -41,23 +46,145 @@ const buttonLabels = [
 
 const ChatbotComponent: React.FC<ChatbotProps> = ({
   selectedMode,
-  selectedLanguage,
   isMuted,
   onMuteToggle,
+  selectedLanguage,
   onLanguageSelect,
+  selectedVoice,
+  onVoiceSelect
 }) => {
   const [selectedTab, setSelectedTab] = useState<string>("");
   const [showPopup, setShowPopup] = useState(false);
   const [popupType, setPopupType] = useState<PopupType>("");
   const [userInput, setUserInput] = useState("");
-  const [selectedVoice, setSelectedVoice] = useState("Female1");
   const [isCallActive, setIsCallActive] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      text: "Hi there 👋\nHow can I help you today?",
+      isUser: false,
+      timestamp: new Date(),
+    },
+  ]);
+
+  const chatboxRef = useRef<HTMLDivElement>(null);
+  const recognition = useRef<any>(null);
+
+  const { setMuted } = useAudioStore();
+
+  const {
+    loadAndSendAvatarData,
+    handleSendCommands,
+    handleResetButtonClick,
+    isWebRTCConnected,
+  } = useWebRTCManager();
+
+  const {
+    lastBotMessage,
+    setLastBotMessage,
+    isProcessingMessage,
+    setIsProcessingMessage,
+    setMessageTimestamp,
+  } = useMessageStore();
+
+  const renderMuteButton = () => (
+    <div
+      id="muteButton"
+      className="muteButton cursor-pointer"
+      onClick={onMuteToggle}
+      title={isMuted ? "Unmute" : "Mute"}
+    >
+      {isMuted ? (
+        <FaVolumeMute color="#ef4444" className="text-red-500" />
+      ) : (
+        <FaVolumeUp color="#ef4444" className="text-red-500" />
+      )}
+    </div>
+  );
 
   useEffect(() => {
-    if (selectedMode === "preview") {
-      setShowPopup(false);
+    if (selectedMode === "conversation" || selectedMode === "preview") {
+      setMuted(false);
     }
-  }, [selectedMode]);
+  }, [selectedMode, setMuted]);
+
+  useEffect(() => {
+    if (lastBotMessage && !isProcessingMessage) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: lastBotMessage,
+          isUser: false,
+          timestamp: new Date(),
+        },
+      ]);
+
+      setLastBotMessage(null);
+
+      if (chatboxRef.current) {
+        chatboxRef.current.scrollTop = chatboxRef.current.scrollHeight;
+      }
+    }
+  }, [lastBotMessage, isProcessingMessage, setLastBotMessage]);
+
+  // Reset processing state timeout
+  useEffect(() => {
+    if (isProcessingMessage) {
+      const timeout = setTimeout(() => {
+        setIsProcessingMessage(false);
+      }, 5000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isProcessingMessage, setIsProcessingMessage]);
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if (window.webkitSpeechRecognition) {
+      recognition.current = new window.webkitSpeechRecognition();
+      recognition.current.continuous = false;
+      recognition.current.interimResults = false;
+      recognition.current.lang = selectedLanguage;
+
+      recognition.current.onresult = (event: any) => {
+        const speechText = event.results[0][0].transcript;
+        handleUserMessage(speechText);
+      };
+
+      recognition.current.onend = () => {
+        setIsCallActive(false);
+      };
+
+      recognition.current.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        setIsCallActive(false);
+      };
+    }
+  }, [selectedLanguage]);
+
+  const handleUserMessage = useCallback(
+    (message: string) => {
+      console.log("Sending user message:", message);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: message,
+          isUser: true,
+          timestamp: new Date(),
+        },
+      ]);
+
+      setIsProcessingMessage(true);
+      setMessageTimestamp(Date.now());
+
+      handleSendCommands({ usermessege: message });
+
+      if (chatboxRef.current) {
+        chatboxRef.current.scrollTop = chatboxRef.current.scrollHeight;
+      }
+    },
+    [handleSendCommands, setIsProcessingMessage, setMessageTimestamp]
+  );
 
   const handleOpenPopup = useCallback((type: PopupType) => {
     setPopupType(type);
@@ -71,7 +198,6 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
 
   const handleConfirm = useCallback(
     (data: any) => {
-      console.log("Confirmed data:", data);
       if (
         data.type === "language" &&
         typeof data.selectedLanguage === "string"
@@ -81,30 +207,51 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
         data.type === "voice" &&
         typeof data.selectedVoice === "string"
       ) {
-        setSelectedVoice(data.selectedVoice);
+        onVoiceSelect(data.selectedVoice);
       }
       handleClosePopup();
     },
-    [onLanguageSelect, handleClosePopup]
-  );
-
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setUserInput(e.target.value);
-    },
-    []
+    [onLanguageSelect]
   );
 
   const handleSendMessage = useCallback(() => {
     if (userInput.trim()) {
-      console.log("Sending message:", userInput);
+      handleUserMessage(userInput.trim());
       setUserInput("");
     }
-  }, [userInput]);
+  }, [userInput, handleUserMessage]);
 
-  const handleCallToggle = () => {
+  const handleCallToggle = useCallback(() => {
+    if (!recognition.current) {
+      alert(
+        "Speech recognition is not supported in your browser. Please use Chrome."
+      );
+      return;
+    }
+
+    if (isCallActive) {
+      recognition.current?.stop();
+    } else {
+      recognition.current?.start();
+    }
     setIsCallActive((prev) => !prev);
-  };
+  }, [isCallActive]);
+
+  const handleClearChat = useCallback(() => {
+    setMessages([
+      {
+        text: "Hi there 👋\nHow can I help you today?",
+        isUser: false,
+        timestamp: new Date(),
+      },
+    ]);
+  }, []);
+
+  useEffect(() => {
+    if (selectedMode === "preview") {
+      setShowPopup(false);
+    }
+  }, [selectedMode]);
 
   const renderConversationMode = () => (
     <>
@@ -152,40 +299,39 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
     </>
   );
 
-  const renderPreviewMode = () => {
-    console.log(selectedLanguage);
-    return (
-      <>
-        <div id="webcam-container">
-          <div className="webcambutton-container">
-            <div id="toggle-webcam">Turn on webcam</div>
-          </div>
-          <div className="webcamVideo-container">
-            <video id="webcam"></video>
-          </div>
+  const renderPreviewMode = () => (
+    <>
+      <div id="webcam-container">
+        <div className="webcambutton-container">
+          <div id="toggle-webcam">Turn on webcam</div>
         </div>
-        <div
-          id="languagesFlags"
-          className="grid grid-cols-2 gap-2 rounded-lg absolute top-1/2 -translate-y-1/2 left-10 z-50 p-2.5"
-        >
-          {languageOptions.map((language) => (
-            <div
-              key={language.code}
-              className={`language-option cursor-pointer flex flex-col items-center justify-center p-1.5 ${
-                selectedLanguage === language.lang ? "selected" : ""
-              }`}
-              onClick={() => onLanguageSelect(language.lang)}
-            >
-              <span
-                className={`flag-icon flag-icon-${language.flagClass} text-2xl mb-1.5`}
-              ></span>
-              <span className="text-xs text-center text-white">{language.lang}</span>
-            </div>
-          ))}
+        <div className="webcamVideo-container">
+          <video id="webcam"></video>
         </div>
-      </>
-    );
-  };
+      </div>
+      <div
+        id="languagesFlags"
+        className="grid grid-cols-2 gap-2 rounded-lg absolute top-1/2 -translate-y-1/2 left-10 z-50 p-2.5"
+      >
+        {languageOptions.map((language) => (
+          <div
+            key={language.code}
+            className={`language-option cursor-pointer flex flex-col items-center justify-center p-1.5 ${
+              selectedLanguage === language.lang ? "selected" : ""
+            }`}
+            onClick={() => onLanguageSelect(language.lang)}
+          >
+            <span
+              className={`flag-icon flag-icon-${language.flagClass} text-2xl mb-1.5`}
+            ></span>
+            <span className="text-xs text-center text-white">
+              {language.lang}
+            </span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
 
   return (
     <div id="chatbot" className="block" tabIndex={0}>
@@ -204,35 +350,45 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
           id="chat-header"
           className="chat-header pr-4 flex justify-between items-center"
         >
-          <div
-            id="muteButton"
-            className="muteButton cursor-pointer"
-            onClick={onMuteToggle}
-            title="Toggle Mute"
-          >
-            {isMuted ? (
-              <FaVolumeMute color="#ef4444" />
-            ) : (
-              <FaVolumeUp color="#ef4444" />
-            )}
-          </div>
+          {renderMuteButton()}
+
           <div
             id="close-chat"
             className="close-chat flex items-center justify-center gap-3"
           >
-            <FaTrash className="cursor-pointer" id="clear-chat-history-icon" />
+            <FaTrash
+              className="cursor-pointer"
+              id="clear-chat-history-icon"
+              onClick={handleClearChat}
+            />
           </div>
         </div>
+
         <div
+          ref={chatboxRef}
           id="chatbox"
           className="chat-content pr-4 h-[calc(100vh-50vh)] overflow-y-auto"
         >
-          <div className="message-container">
-            <p className="message-text mb-2">
-              Hi there 👋 <br /> How can I help you today?
-            </p>
-          </div>
+          {messages.map((message, index) => (
+            <div
+              key={`${index}-${message.timestamp.getTime()}`}
+              className={`message-container ${
+                message.isUser ? "text-right" : ""
+              } mb-2`}
+            >
+              <p
+                className={`message-text inline-block p-2 rounded-lg ${
+                  message.isUser
+                    ? "bg-[#00cdff] text-white"
+                    : "bg-[rgba(0,0,0,0.2)] text-white"
+                }`}
+              >
+                {message.text}
+              </p>
+            </div>
+          ))}
         </div>
+
         <div id="chat-input" className="chat-input">
           <div className="chat-input-container flex items-center">
             <div className="input-wrapper flex-grow mr-2">
@@ -242,11 +398,15 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
                 placeholder="Type a message..."
                 className="user-input-field w-full"
                 value={userInput}
-                onChange={handleInputChange}
+                onChange={(e) => setUserInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
               />
             </div>
-            <div id="send-button" className="send-button cursor-pointer">
+            <div
+              id="send-button"
+              className="send-button cursor-pointer"
+              onClick={handleSendMessage}
+            >
               <svg
                 id="send_button"
                 style={{ color: "white" }}
@@ -281,10 +441,8 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
                   enableBackground="new 0 0 512 512"
                 >
                   <g>
-                    <g>
-                      <path d="m439.5,236c0-11.3-9.1-20.4-20.4-20.4s-20.4,9.1-20.4,20.4c0,70-64,126.9-142.7,126.9-78.7,0-142.7-56.9-142.7-126.9 0-11.3-9.1-20.4-20.4-20.4s-20.4,9.1-20.4,20.4c0,86.2 71.5,157.4 163.1,166.7v57.5h-23.6c-11.3,0-20.4,9.1-20.4,20.4 0,11.3 9.1,20.4 20.4,20.4h88c11.3,0 20.4-9.1 20.4-20.4 0-11.3-9.1-20.4-20.4-20.4h-23.6v-57.5c91.6-9.3 163.1-80.5 163.1-166.7z" />
-                      <path d="m256,323.5c51,0 92.3-41.3 92.3-92.3v-127.9c0-51-41.3-92.3-92.3-92.3s-92.3,41.3-92.3,92.3v127.9c0,51 41.3,92.3 92.3,92.3zm-52.3-220.2c0-28.8 23.5-52.3 52.3-52.3s52.3,23.5 52.3,52.3v127.9c0,28.8-23.5,52.3-52.3,52.3s-52.3-23.5-52.3-52.3v-127.9z" />
-                    </g>
+                    <path d="m439.5,236c0-11.3-9.1-20.4-20.4-20.4s-20.4,9.1-20.4,20.4c0,70-64,126.9-142.7,126.9-78.7,0-142.7-56.9-142.7-126.9 0-11.3-9.1-20.4-20.4-20.4s-20.4,9.1-20.4,20.4c0,86.2 71.5,157.4 163.1,166.7v57.5h-23.6c-11.3,0-20.4,9.1-20.4,20.4 0,11.3 9.1,20.4 20.4,20.4h88c11.3,0 20.4-9.1 20.4-20.4 0-11.3-9.1-20.4-20.4-20.4h-23.6v-57.5c91.6-9.3 163.1-80.5 163.1-166.7z" />
+                    <path d="m256,323.5c51,0 92.3-41.3 92.3-92.3v-127.9c0-51-41.3-92.3-92.3-92.3s-92.3,41.3-92.3,92.3v127.9c0,51 41.3,92.3 92.3,92.3zm-52.3-220.2c0-28.8 23.5-52.3 52.3-52.3s52.3,23.5 52.3,52.3v127.9c0,28.8-23.5,52.3-52.3,52.3s-52.3-23.5-52.3-52.3v-127.9z" />
                   </g>
                 </svg>
               </div>
@@ -304,16 +462,26 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
           </div>
         </div>
       </div>
+
       {showPopup && selectedMode !== "preview" && (
         <PopupManager
           type={popupType}
           onClose={handleClosePopup}
           onConfirm={handleConfirm}
+          onLanguageSelect={onLanguageSelect}
           selectedLanguage={selectedLanguage}
+          onVoiceSelect={onVoiceSelect}
+          selectedVoice={selectedVoice}
         />
       )}
     </div>
   );
 };
+
+declare global {
+  interface Window {
+    webkitSpeechRecognition: any;
+  }
+}
 
 export default ChatbotComponent;

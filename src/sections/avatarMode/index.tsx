@@ -4,36 +4,31 @@ import { useEffect, useState, useRef, useContext } from "react";
 import { useRouter } from "next/navigation";
 
 import { UserContext } from "@/provider/UserContext";
+import Stripe from "@/provider/Stripe";
+import { audioManager, useAudioStore } from "@/store/audioManager";
+import { webRTCManager } from "@/lib/webrtcClient";
 
+import Navbar from "@/components/Navbar";
 import VideoComponent from "./components/VideoComponent";
 import WatermarkComponent from "./components/WatermarkComponent";
 import ChatbotComponent from "./components/ChatbotComponent";
 import ArtistModeComponent from "./components/ArtistModeComponent";
-import { webRTCManager } from "@/lib/webrtcClient";
-import Navbar from "@/components/Navbar";
 
-export default function AvatarModeView() {
+const AvatarModeUIView = () => {
   const router = useRouter();
 
   const { userInfo, isAuthenticated, loading, subscription, logout } =
     useContext(UserContext);
+  const { isMuted, setMuted } = useAudioStore();
 
   const [selectedMode, setSelectedMode] = useState<string>("design");
   const [selectedLanguage, setSelectedLanguage] = useState("English");
-  const [isMuted, setMuted] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState("Female1");
   const [isWebRTCInitialized, setIsWebRTCInitialized] = useState(false);
 
   const sizeContainerRef = useRef<HTMLDivElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-
-  const handleMuteToggle = () => {
-    setMuted((prev) => !prev);
-  };
-
-  const handleLanguageSelect = (lang: string) => {
-    setSelectedLanguage(lang);
-  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -43,19 +38,24 @@ export default function AvatarModeView() {
   }, [router]);
 
   useEffect(() => {
+    if (selectedMode === "conversation" || selectedMode === "preview") {
+      setMuted(false); // Ensure audio is unmuted by default
+    }
+  }, [selectedMode, setMuted]);
+
+  useEffect(() => {
     const initWebRTC = async () => {
       if (
         sizeContainerRef.current &&
         videoContainerRef.current &&
         audioRef.current
       ) {
+        audioManager.initializeAudio(audioRef.current);
         await webRTCManager.initializeWebRTC(
           sizeContainerRef,
           videoContainerRef,
           audioRef,
-          (isLoading: boolean) => {
-            // You can use this callback to update a loading state if needed
-          }
+          (isLoading: boolean) => {}
         );
         setIsWebRTCInitialized(true);
       }
@@ -63,6 +63,20 @@ export default function AvatarModeView() {
 
     initWebRTC();
   }, []);
+
+  const handleMuteToggle = () => {
+    const newMutedState = !isMuted;
+    setMuted(newMutedState);
+    audioManager.toggleMute(newMutedState);
+  };
+
+  const handleLanguageSelect = (lang: string) => {
+    setSelectedLanguage(lang);
+  };
+
+  const handleSelectedVoice = (voice: string) => {
+    setSelectedVoice(voice);
+  };
 
   const getTierText = () => {
     const DEV_ACCOUNT_ID = +(process.env.NEXT_PUBLIC_DEV_ACCOUNT_ID ?? 0);
@@ -83,7 +97,10 @@ export default function AvatarModeView() {
     <>
       <Navbar />
       <div id="sizeContainer" className="relative" ref={sizeContainerRef}>
-        {(getTierText() === 'Free' || getTierText() === 'Loading...') && <WatermarkComponent />}
+        <audio ref={audioRef} />
+        {(getTierText() === "Free" || getTierText() === "Loading...") && (
+          <WatermarkComponent />
+        )}
         <VideoComponent
           handleSelectedMenu={setSelectedMode}
           selectedMode={selectedMode}
@@ -92,11 +109,13 @@ export default function AvatarModeView() {
         />
         {(selectedMode === "conversation" || selectedMode === "preview") && (
           <ChatbotComponent
-            selectedLanguage={selectedLanguage}
+            selectedMode={selectedMode}
             isMuted={isMuted}
             onMuteToggle={handleMuteToggle}
             onLanguageSelect={handleLanguageSelect}
-            selectedMode={selectedMode}
+            selectedLanguage={selectedLanguage}
+            onVoiceSelect={handleSelectedVoice}
+            selectedVoice={selectedVoice}
           />
         )}
         {selectedMode === "design" && isWebRTCInitialized && (
@@ -105,4 +124,14 @@ export default function AvatarModeView() {
       </div>
     </>
   );
-}
+};
+
+const AvatarModeView = () => {
+  return (
+    <Stripe>
+      <AvatarModeUIView />
+    </Stripe>
+  );
+};
+
+export default AvatarModeView;

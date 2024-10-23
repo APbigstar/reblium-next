@@ -3,14 +3,12 @@ import { useRouter } from "next/navigation";
 import { PopupType } from "@/types/type";
 
 import { useWebRTCManager } from "@/lib/webrtcClient";
-
 import { useSelectedMenuItemStore } from "@/store/selectedMenuItem";
-
 import { UserContext } from "@/provider/UserContext";
-
 import usePayStripeCardPayment from "@/hooks/use-pay-stripe-card-payment";
-
 import CardElement from "@/components/StripeCard";
+
+import { voiceMappings, languageOptions, voiceOptions } from "../Constant";
 
 interface PopupData {
   type: PopupType;
@@ -29,6 +27,9 @@ interface PopupManagerProps {
   onClose: () => void;
   onConfirm?: (data: PopupData) => void;
   selectedLanguage?: string;
+  onLanguageSelect?: (language: string) => void;
+  selectedVoice?: string;
+  onVoiceSelect?: (language: string) => void;
   onPayCredits?: (creditAmount: number) => void;
   onSaveAvatar?: () => void;
   onCreateAvatar?: (avatarName: string) => void;
@@ -39,11 +40,15 @@ const PopupManager: React.FC<PopupManagerProps> = ({
   type,
   onClose,
   onConfirm = () => {},
-  selectedLanguage = "en-us",
+  selectedLanguage,
+  selectedVoice,
   onPayCredits,
   onCreateAvatar,
   onSaveAvatar,
-  showToast
+  showToast,
+  onLanguageSelect,
+  onVoiceSelect,
+
 }) => {
   const router = useRouter();
 
@@ -73,8 +78,8 @@ const PopupManager: React.FC<PopupManagerProps> = ({
   const [formData, setFormData] = useState<PopupData>({
     type,
     apiKey: "",
-    selectedLanguage: selectedLanguage, // Initialize with the prop
-    selectedVoice: "Female1",
+    selectedLanguage: selectedLanguage, 
+    selectedVoice: selectedVoice,
     welcomeMessage: "",
     persona: "",
     uploadedFile: null,
@@ -133,10 +138,12 @@ const PopupManager: React.FC<PopupManagerProps> = ({
 
   const handleLanguageSelect = (lang: string) => {
     setFormData((prev) => ({ ...prev, selectedLanguage: lang }));
+    onLanguageSelect(lang)
   };
 
   const handleVoiceSelect = (voice: string) => {
     setFormData((prev) => ({ ...prev, selectedVoice: voice }));
+    onVoiceSelect(voice)
   };
 
   const handleConfirm = (type: PopupType) => {
@@ -233,27 +240,24 @@ const PopupManager: React.FC<PopupManagerProps> = ({
         </span>
         <h3>Choose a Voice</h3>
         <ul id="voiceList">
-          {[
-            { name: "Samantha", value: "Female1" },
-            { name: "Richard", value: "Male1" },
-            { name: "Emily", value: "Female2" },
-            { name: "John", value: "Male2" },
-          ].map((voice) => (
+          {voiceOptions.map((voice) => (
             <div
               key={voice.value}
-              className={`voice-option ${
+              className={`voice-option cursor-pointer p-2 ${
                 formData.selectedVoice === voice.value
                   ? "selected"
                   : "bg-gray-800"
               }`}
-              onClick={() => handleVoiceSelect(voice.value)}
+              onClick={() => {
+                handleVoiceSelect(voice.value);
+              }}
             >
               {voice.name}
             </div>
           ))}
         </ul>
-        <button type="button" onClick={() => handleConfirm("voice")}>
-          Confirm
+        <button type="button" onClick={onClose}>
+          Close
         </button>
       </form>
     </div>
@@ -267,32 +271,27 @@ const PopupManager: React.FC<PopupManagerProps> = ({
         </span>
         <h3>Select a Language</h3>
         <ul id="languageList">
-          {[
-            { lang: "English", code: "en-US" },
-            { lang: "Dutch", code: "nl-NL" },
-            { lang: "French", code: "fr-FR" },
-            { lang: "Spanish", code: "es-ES" },
-            { lang: "German", code: "de-DE" },
-            { lang: "Japanese", code: "ja-JP" },
-            { lang: "Mandarin", code: "cmn-Hans-CN" },
-            { lang: "Cantonese", code: "yue-Hant-HK" },
-            { lang: "Arabic", code: "ar-XA" },
-          ].map((language) => (
+          {languageOptions.map((language) => (
             <div
               key={language.code}
-              className={`language-option ${
+              className={`language-option flex items-center gap-2 cursor-pointer p-2 ${
                 formData.selectedLanguage === language.lang
                   ? "selected"
                   : "bg-gray-800"
               }`}
-              onClick={() => handleLanguageSelect(language.lang)}
+              onClick={() => {
+                handleLanguageSelect(language.lang);
+              }}
             >
-              {language.lang}
+              <span
+                className={`flag-icon flag-icon-${language.flagClass}`}
+              ></span>
+              <span>{language.lang}</span>
             </div>
           ))}
         </ul>
-        <button type="button" onClick={() => handleConfirm("language")}>
-          Confirm
+        <button type="button" onClick={onClose}>
+          Close
         </button>
       </form>
     </div>
@@ -497,7 +496,9 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             setIsPaying(false);
             setCardPaymentState({ errorMessage: "Payment successful!" });
             setShowCardElement(false);
-            showToast(`Added ${amount} credits successfully. Please try to save avatar again! `);
+            showToast(
+              `Added ${amount} credits successfully. Please try to save avatar again! `
+            );
             onClose();
             // onSaveAvatar();
           }
@@ -631,7 +632,6 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             </button>
           </div>
         </div>
-        
       </div>
     );
   };

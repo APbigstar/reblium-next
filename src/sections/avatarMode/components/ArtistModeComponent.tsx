@@ -12,13 +12,15 @@ import {
   FaSave,
   FaLock,
 } from "react-icons/fa";
-
-import Stripe from "@/provider/Stripe";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import { useWebRTCManager } from "@/lib/webrtcClient";
+import { useSelectedMenuItemStore } from "@/store/selectedMenuItem";
+import { UserContext } from "@/provider/UserContext";
+import { PopupType } from "@/types/type";
 
 import PopupManager from "./PopupManager";
-
 import RandomSubMenu from "./Menus/RandomSubMenu";
 import SkinSubMenu from "./Menus/SkinSubMenu";
 import MakeupSubMenu from "./Menus/MakeupSubMenu";
@@ -28,15 +30,7 @@ import AccessoriesSubMenu from "./Menus/AccessoriesSubMenu";
 import BackgroundSubMenu from "./Menus/BackgroundSubMenu";
 import WardrobeSubMenu from "./Menus/WardrobeSubMenu";
 
-import { PopupType } from "@/types/type";
-
 import { assetNames, backgroundAssets } from "../Constant";
-import { useSelectedMenuItemStore } from "@/store/selectedMenuItem";
-
-import { UserContext } from "@/provider/UserContext";
-
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 interface ArtistModeProps {
   selectedMode: string;
@@ -72,7 +66,7 @@ const useFullscreen = () => {
   return { isFullscreen, toggleFullscreen };
 };
 
-const ArtistUIModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
+const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
   const { credits, refetchUserData } = useContext(UserContext);
 
   const [activeMenu, setActiveMenu] = useState("generator");
@@ -82,6 +76,15 @@ const ArtistUIModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
   const [showPopup, setShowPopup] = useState(false);
   const [popupType, setPopupType] = useState<PopupType>("");
   const { isFullscreen, toggleFullscreen } = useFullscreen();
+
+  const {
+    loadAndSendAvatarData,
+    handleSendCommands,
+    handleResetButtonClick,
+    isWebRTCConnected,
+    getLastResponse,
+    getSelectedCommand,
+  } = useWebRTCManager();
 
   // Access the selected items from the store
   const selectedItems = useSelectedMenuItemStore((state) => state.items);
@@ -98,15 +101,6 @@ const ArtistUIModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
     setPopupType("");
   }, []);
 
-  const {
-    loadAndSendAvatarData,
-    handleSendCommands,
-    handleResetButtonClick,
-    isWebRTCConnected,
-    getLastResponse,
-    getSelectedCommand,
-  } = useWebRTCManager();
-
   const menuItems = [
     { key: "generator", component: RandomSubMenu },
     { key: "skin", component: SkinSubMenu },
@@ -121,6 +115,7 @@ const ArtistUIModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
   useEffect(() => {
     const createdMode = localStorage.getItem("create_mode");
 
+    console.log(createdMode)
     if (createdMode === "set") {
       handleRandomizeClick();
     } else {
@@ -152,7 +147,6 @@ const ArtistUIModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
   };
 
   const handleRandomizeClick = () => {
-    console.log("Clicked Handle Randomize Button");
     const gender = {
       Male: true,
       Female: true,
@@ -333,7 +327,7 @@ const ArtistUIModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
   };
 
   const showToast = (message: string) => {
-    toast.success(message); 
+    toast.success(message);
   };
 
   return (
@@ -514,14 +508,6 @@ const ArtistUIModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
         hideProgressBar={false}
       />
     </div>
-  );
-};
-
-const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
-  return (
-    <Stripe>
-      <ArtistUIModeComponent selectedMode={selectedMode} />
-    </Stripe>
   );
 };
 

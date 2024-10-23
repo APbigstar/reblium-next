@@ -820,3 +820,22 @@ export const specialAssets = [
   "Cyberpunk_Metal_Implants",
   "Fantasy_Gold_Armor",
 ];
+
+export const languageOptions = [
+  { lang: "English", code: "en-US", flagClass: "us" },
+  { lang: "Dutch", code: "nl-NL", flagClass: "nl" },
+  { lang: "French", code: "fr-FR", flagClass: "fr" },
+  { lang: "Spanish", code: "es-ES", flagClass: "es" },
+  { lang: "German", code: "de-DE", flagClass: "de" },
+  { lang: "Japanese", code: "ja-JP", flagClass: "jp" },
+  { lang: "Mandarin", code: "cmn-Hans-CN", flagClass: "cn" },
+  { lang: "Cantonese", code: "yue-Hant-HK", flagClass: "hk" },
+  { lang: "Arabic", code: "ar-XA", flagClass: "sa" },
+] as const;
+
+export const voiceOptions = [
+  { name: "Samantha", value: "Samantha" },
+  { name: "Richard", value: "Richard" },
+  { name: "Emily", value: "Emily" },
+  { name: "John", value: "John" },
+] as const;
