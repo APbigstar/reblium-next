@@ -59,6 +59,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
     isWebRTCConnected,
     getLastResponse,
     getSelectedCommand,
+    cleanup
   } = useWebRTCManager();
 
   const selectedItems = useSelectedMenuItemStore((state) => state.items);
@@ -151,11 +152,12 @@ const PopupManager: React.FC<PopupManagerProps> = ({
   };
 
   const handleExistFunction = () => {
-    router.push("/profile");
+    cleanup();
     localStorage.removeItem("create_mode");
     localStorage.removeItem("avatar_id");
     setWardrobe("");
     setHair("");
+    router.push("/profile");
   };
 
   const handleSaveAvatar = () => {
@@ -384,6 +386,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
 
   const renderSaveAvatar = () => (
     <div id="popup" className="popup">
+      <form id="avatarForm">
         <span className="close-button" onClick={onClose}>
           &times;
         </span>
@@ -400,9 +403,10 @@ const PopupManager: React.FC<PopupManagerProps> = ({
           value={formData.avatarName}
           onChange={handleInputChange}
         />
-        <button type="submit" id="confirmButton" onClick={handleSaveAvatar}>
+        <button type="button" id="confirmButton" onClick={handleSaveAvatar}>
           Confirm
         </button>
+      </form>
     </div>
   );
 

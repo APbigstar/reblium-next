@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useContext } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 import { UserContext } from "@/provider/UserContext";
 import Stripe from "@/provider/Stripe";
@@ -14,6 +15,21 @@ import WatermarkComponent from "./components/WatermarkComponent";
 import ChatbotComponent from "./components/ChatbotComponent";
 import ArtistModeComponent from "./components/ArtistModeComponent";
 
+const LoadingOverlay = () => (
+  <div className="loader-overlay">
+    <div className="loader">
+      <Image
+        className="w-full h-full mb-8"
+        src="/images/reblium_logo.png"
+        alt="logo"
+        width={100}
+        height={100}
+      />
+      <p className="text-white">Lining up...</p>
+    </div>
+  </div>
+);
+
 const AvatarModeUIView = () => {
   const router = useRouter();
 
@@ -25,6 +41,8 @@ const AvatarModeUIView = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("English");
   const [selectedVoice, setSelectedVoice] = useState("Female1");
   const [isWebRTCInitialized, setIsWebRTCInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const sizeContainerRef = useRef<HTMLDivElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
@@ -34,35 +52,43 @@ const AvatarModeUIView = () => {
     const token = localStorage.getItem("token");
     if (!token) {
       router.push("/");
+      return;
     }
-  }, [router]);
 
-  useEffect(() => {
-    if (selectedMode === "conversation" || selectedMode === "preview") {
-      setMuted(false); // Ensure audio is unmuted by default
-    }
-  }, [selectedMode, setMuted]);
+    const initializeWebRTC = async () => {
+      try {
+        setError(null);
+        setIsLoading(true);
 
-  useEffect(() => {
-    const initWebRTC = async () => {
-      if (
-        sizeContainerRef.current &&
-        videoContainerRef.current &&
-        audioRef.current
-      ) {
-        audioManager.initializeAudio(audioRef.current);
+        audioManager.initializeAudio(audioRef.current!);
         await webRTCManager.initializeWebRTC(
           sizeContainerRef,
           videoContainerRef,
           audioRef,
-          (isLoading: boolean) => {}
+          setIsLoading
         );
+
         setIsWebRTCInitialized(true);
+      } catch (error) {
+        console.error("Failed to initialize WebRTC:", error);
+        setError("Failed to connect to avatar service. Please try again.");
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    initWebRTC();
-  }, []);
+    initializeWebRTC();
+
+    return () => {
+      webRTCManager.cleanup();
+    };
+  }, [router]);
+
+  useEffect(() => {
+    if (selectedMode === "conversation" || selectedMode === "preview") {
+      setMuted(false);
+    }
+  }, [selectedMode, setMuted]);
 
   const handleMuteToggle = () => {
     const newMutedState = !isMuted;
@@ -76,6 +102,12 @@ const AvatarModeUIView = () => {
 
   const handleSelectedVoice = (voice: string) => {
     setSelectedVoice(voice);
+  };
+
+  const handleRetry = () => {
+    setError(null);
+    setIsLoading(true);
+    router.refresh();
   };
 
   const getTierText = () => {
@@ -96,6 +128,22 @@ const AvatarModeUIView = () => {
   return (
     <>
       <Navbar />
+      {isLoading && <LoadingOverlay />}
+
+      {error && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center">
+          <div className="bg-red-900 p-6 rounded-lg max-w-md text-center">
+            <div className="text-white mb-4">{error}</div>
+            <button
+              onClick={handleRetry}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              Retry Connection
+            </button>
+          </div>
+        </div>
+      )}
+
       <div id="sizeContainer" className="relative" ref={sizeContainerRef}>
         <audio ref={audioRef} />
         {(getTierText() === "Free" || getTierText() === "Loading...") && (

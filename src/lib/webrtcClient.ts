@@ -29,11 +29,41 @@ class WebRTCManager {
   private audioRef: HTMLAudioElement | null = null;
   private onVideoReadyCallbacks: (() => void)[] = [];
   public defaultAvatarPrompt = false;
+  private connectionAttempts = 0;
+  private maxConnectionAttempts = 3;
+  private retryTimeout: NodeJS.Timeout | null = null;
+  private loadingCallback: ((isLoading: boolean) => void) | null = null;
 
   private constructor() {
+    this.resetVideoLoadedPromise();
+  }
+
+  private resetVideoLoadedPromise() {
     this.videoLoadedPromise = new Promise((resolve) => {
       this.videoLoadedResolver = resolve;
     });
+  }
+
+  public setLoadingCallback(callback: (isLoading: boolean) => void): void {
+    this.loadingCallback = callback;
+  }
+
+  private updateLoadingState(isLoading: boolean): void {
+    if (this.loadingCallback) {
+      this.loadingCallback(isLoading);
+    }
+  }
+
+  private async waitForConnection(maxWaitTime: number = 15000): Promise<void> {
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < maxWaitTime) {
+      if (this.isWebRTCConnected()) {
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+    throw new Error("Connection timeout");
   }
 
   public static getInstance(): WebRTCManager {
@@ -43,6 +73,51 @@ class WebRTCManager {
     return WebRTCManager.instance;
   }
 
+  public cleanup(): Promise<void> {
+    return new Promise((resolve) => {
+      if (this.retryTimeout) {
+        clearTimeout(this.retryTimeout);
+        this.retryTimeout = null;
+      }
+
+      if (this.webRTCClient) {
+        try {
+          // Stop all media tracks
+          if (this.videoElement && this.videoElement.srcObject) {
+            const stream = this.videoElement.srcObject as MediaStream;
+            stream.getTracks().forEach((track) => track.stop());
+            this.videoElement.srcObject = null;
+          }
+
+          // Close any existing connections
+          const client = this.webRTCClient as any;
+          if (client.peer) {
+            client.peer.close();
+          }
+          if (client.socket) {
+            client.socket.close();
+          }
+
+          // Reset all state
+          this.webRTCClient = null;
+          this.videoLoaded = false;
+          this.videoElement = null;
+          this.audioRef = null;
+          this.options = null;
+          this.lastResponse = null;
+          this.selectedCommand = null;
+          this.latestLoadAvatarCommand = null;
+          this.connectionAttempts = 0;
+          this.resetVideoLoadedPromise();
+          this.onVideoReadyCallbacks = [];
+        } catch (error) {
+          console.error("Error during WebRTC cleanup:", error);
+        }
+      }
+
+      setTimeout(resolve, 500);
+    });
+  }
   public onVideoReady(callback: () => void): void {
     if (this.videoLoaded) {
       callback();
@@ -52,12 +127,12 @@ class WebRTCManager {
   }
 
   private handleApplicationResponse(response: string): void {
-    if (response.startsWith('AI message :')) {
-      const messageContent = response.replace('AI message :', '').trim();
+    if (response.startsWith("AI message :")) {
+      const messageContent = response.replace("AI message :", "").trim();
       const messageStore = useMessageStore.getState();
-      
+
       if (
-        messageStore.isProcessingMessage && 
+        messageStore.isProcessingMessage &&
         messageContent !== messageStore.lastBotMessage &&
         Date.now() - messageStore.messageTimestamp < 5000
       ) {
@@ -75,24 +150,47 @@ class WebRTCManager {
     audioRef: RefObject<HTMLAudioElement>,
     setIsLoading: (isLoading: boolean) => void
   ): Promise<void> {
-    if (typeof window === "undefined") {
-      throw new Error("WebRTC can only be initialized in a browser environment");
+    this.setLoadingCallback(setIsLoading);
+    this.updateLoadingState(true);
+
+    try {
+      // Cleanup existing connection
+      await this.cleanup();
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      this.assertElementsExist(sizeContainerRef, videoContainerRef, audioRef);
+
+      this.options = this.createWebRTCOptions(
+        sizeContainerRef,
+        videoContainerRef,
+        audioRef,
+        setIsLoading
+      );
+
+      this.webRTCClient = new WebRTCClient(this.options);
+      this.setupVideoDetection(videoContainerRef);
+      await this.waitForConnection(),
+      await this.videoLoadedPromise;
+
+      this.updateLoadingState(false);
+    } catch (error) {
+      console.error("Failed to initialize WebRTC:", error);
+
+      if (this.connectionAttempts < this.maxConnectionAttempts) {
+        this.connectionAttempts++;
+        this.retryTimeout = setTimeout(() => {
+          this.initializeWebRTC(
+            sizeContainerRef,
+            videoContainerRef,
+            audioRef,
+            setIsLoading
+          );
+        }, 2000);
+      } else {
+        this.updateLoadingState(false);
+        throw error;
+      }
     }
-
-    this.assertElementsExist(sizeContainerRef, videoContainerRef, audioRef);
-    
-    this.options = this.createWebRTCOptions(
-      sizeContainerRef,
-      videoContainerRef,
-      audioRef,
-      setIsLoading
-    );
-    this.audioRef = audioRef.current;
-    this.webRTCClient = new WebRTCClient(this.options);
-    this.setupVideoDetection(videoContainerRef);
-
-    // Wait for video to be ready before resolving initialization
-    await this.videoLoadedPromise;
   }
 
   private assertElementsExist(
@@ -100,7 +198,11 @@ class WebRTCManager {
     videoContainerRef: RefObject<HTMLElement>,
     audioRef: RefObject<HTMLAudioElement>
   ): void {
-    if (!sizeContainerRef.current || !videoContainerRef.current || !audioRef.current) {
+    if (
+      !sizeContainerRef.current ||
+      !videoContainerRef.current ||
+      !audioRef.current
+    ) {
       throw new Error("Required elements are not available");
     }
   }
@@ -128,9 +230,14 @@ class WebRTCManager {
   private setupVideoDetection(videoContainerRef: RefObject<HTMLElement>): void {
     if (typeof window === "undefined") return;
 
-    const observer = new MutationObserver(() => this.checkForVideo(videoContainerRef));
+    const observer = new MutationObserver(() =>
+      this.checkForVideo(videoContainerRef)
+    );
     if (videoContainerRef.current) {
-      observer.observe(videoContainerRef.current, { childList: true, subtree: true });
+      observer.observe(videoContainerRef.current, {
+        childList: true,
+        subtree: true,
+      });
     }
     this.checkForVideo(videoContainerRef);
   }
@@ -151,9 +258,9 @@ class WebRTCManager {
         this.videoLoaded = true;
         this.videoLoadedResolver?.();
         this.handleSendCommands({ cameraswitch: "head" });
-        
+
         // Execute all callbacks waiting for video ready
-        this.onVideoReadyCallbacks.forEach(callback => callback());
+        this.onVideoReadyCallbacks.forEach((callback) => callback());
         this.onVideoReadyCallbacks = []; // Clear the callbacks
       }
     };
@@ -179,7 +286,9 @@ class WebRTCManager {
 
       const personaInfo = jsonData["Personas"];
       if (personaInfo && typeof window !== "undefined") {
-        const personaInput = document.getElementById("personaInput") as HTMLInputElement | null;
+        const personaInput = document.getElementById(
+          "personaInput"
+        ) as HTMLInputElement | null;
         if (personaInput) {
           personaInput.value = personaInfo;
         }
@@ -194,9 +303,9 @@ class WebRTCManager {
   public async handleSendCommands(command: Command): Promise<boolean> {
     // Ensure video is loaded before sending any commands
     await this.videoLoadedPromise;
-    
+
     this.selectedCommand = Object.keys(command)[0];
-    
+
     try {
       this.webRTCClient?.emitUIInteraction(command);
       if ("resetavatar" in command) {
@@ -213,8 +322,9 @@ class WebRTCManager {
   public isWebRTCConnected(): boolean {
     return !!(
       this.webRTCClient &&
-      (this.webRTCClient as unknown as { socket?: { ready: () => boolean } })
-        .socket?.ready()
+      (
+        this.webRTCClient as unknown as { socket?: { ready: () => boolean } }
+      ).socket?.ready()
     );
   }
 
@@ -245,6 +355,8 @@ export function useWebRTCManager() {
     isWebRTCConnected: () => webRTCManager.isWebRTCConnected(),
     getLastResponse: () => webRTCManager.getLastResponse(),
     getSelectedCommand: () => webRTCManager.getSelectedCommand(),
-    onVideoReady: (callback: () => void) => webRTCManager.onVideoReady(callback),
+    onVideoReady: (callback: () => void) =>
+      webRTCManager.onVideoReady(callback),
+    cleanup: () => webRTCManager.cleanup(),
   };
 }

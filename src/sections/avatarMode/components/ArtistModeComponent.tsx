@@ -335,21 +335,6 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
 
   return (
     <div className="artist_mode" id="artist_mode" tabIndex={0}>
-      {!isWebRTCConnected && (
-        <div className="loader-overlay">
-          <div className="loader">
-            <Image
-              className="w-full h-full mb-8"
-              src="/images/reblium_logo.png"
-              alt="logo"
-              width={100}
-              height={100}
-            />
-            <p className="text-white">Lining up...</p>
-          </div>
-        </div>
-      )}
-
       <div id="buttonsContainer" className="avatar-menu">
         {[
           "Generator",
