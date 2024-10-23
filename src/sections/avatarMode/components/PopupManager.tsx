@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useContext } from "react";
+import { FaTimes } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { PopupType } from "@/types/type";
 
@@ -33,8 +34,10 @@ interface PopupManagerProps {
   onPayCredits?: (creditAmount: number) => void;
   onSaveAvatar?: () => void;
   onCreateAvatar?: (avatarName: string) => void;
-  showToast?: (message: string) => void;
-  recognition?: React.RefObject<any>;
+  onShowToast?: (
+    type: "success" | "error" | "info" | "warning",
+    message: string
+  ) => void;
 }
 
 const PopupManager: React.FC<PopupManagerProps> = ({
@@ -46,36 +49,21 @@ const PopupManager: React.FC<PopupManagerProps> = ({
   onPayCredits,
   onCreateAvatar,
   onSaveAvatar,
-  showToast,
+  onShowToast,
   onLanguageSelect,
   onVoiceSelect,
-  recognition,
 }) => {
   const router = useRouter();
 
-  const {
-    loadAndSendAvatarData,
-    handleSendCommands,
-    handleResetButtonClick,
-    isWebRTCConnected,
-    getLastResponse,
-    getSelectedCommand,
-    cleanup,
-  } = useWebRTCManager();
+  const { handleSendCommands, cleanup, loadAndSendAvatarData } =
+    useWebRTCManager();
 
   const selectedItems = useSelectedMenuItemStore((state) => state.items);
   const setHair = useSelectedMenuItemStore((state) => state.setHair);
   const setWardrobe = useSelectedMenuItemStore((state) => state.setWardrobe);
 
   const payStripeCardPayment = usePayStripeCardPayment();
-  const {
-    userInfo,
-    credits,
-    loading,
-    isAuthenticated,
-    subscription,
-    refetchUserData,
-  } = useContext(UserContext);
+  const { subscription, refetchUserData } = useContext(UserContext);
 
   const [formData, setFormData] = useState<PopupData>({
     type,
@@ -119,11 +107,115 @@ const PopupManager: React.FC<PopupManagerProps> = ({
     }));
   }, [FRONTEND_URL, encryptData]);
 
+  useEffect(() => {
+    if (type === "chat-setting") {
+      handleGetChattingData();
+    }
+  }, [type]);
+
+  const handleGetChattingData = async () => {
+    const avatarId = localStorage.getItem("avatar_id");
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No token found");
+    }
+
+    const response = await fetch(`/api/userchat?avatarId=${avatarId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const { data, success } = await response.json();
+
+    if (success) {
+      setFormData({
+        ...formData,
+        welcomeMessage: data.welcome_message,
+        persona: data.prompts,
+      });
+    }
+  };
+
+  const handleSaveChatData = async () => {
+    try {
+      const avatarId = localStorage.getItem("avatar_id");
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No token found");
+      }
+
+      // Create FormData object
+      const formDataToSend = new FormData();
+      formDataToSend.append("avatarId", avatarId || "");
+      formDataToSend.append("prompts", formData.persona);
+      formDataToSend.append("welcomeMessage", formData.welcomeMessage);
+
+      const response = await fetch(`/api/userchat`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formDataToSend,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        onShowToast("success", data.message);
+        onClose();
+      } else {
+        onShowToast("error", data.error || "Failed to save chat data");
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error saving chat data:", error);
+      onShowToast("error", "Failed to save chat data");
+      onClose();
+    }
+  };
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleDHSFileDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+
+    const file = e.dataTransfer.files[0];
+    if (!file) {
+      onShowToast("error", "No file was dropped");
+      return;
+    }
+    const fileExtension = file.name.split(".").pop()?.toLowerCase();
+    if (fileExtension !== "dhs") {
+      onShowToast("error", "Please upload a .dhs file");
+      return;
+    }
+
+    try {
+      setFormData((prev) => ({ ...prev, uploadedFile: file }));
+    } catch (error) {
+      console.error("Error handling file drop:", error);
+      onShowToast("error", "Failed to process DHS file");
+    }
+  };
+
+  const handleLoadUploadDHSTemplate = () => {
+    if (formData.uploadedFile) {
+      loadAndSendAvatarData(
+        `/DHS_template/templates/${formData.uploadedFile.name}`
+      );
+    }
+  };
+
+  const handleChatGPTSetting = () => {
+    handleSendCommands({ gptapikey: formData.apiKey });
+    onClose();
   };
 
   const handleCopyLink = () => {
@@ -139,7 +231,6 @@ const PopupManager: React.FC<PopupManagerProps> = ({
   };
 
   const handleLanguageSelect = (code: string, lang: string) => {
-    console.log(code, lang)
     setFormData((prev) => ({ ...prev, selectedLanguage: code }));
     onLanguageSelect(code);
     handleSendCommands({
@@ -180,7 +271,6 @@ const PopupManager: React.FC<PopupManagerProps> = ({
   };
 
   const handleSaveAvatar = () => {
-    // handleConfirm("save-avatar");
     onCreateAvatar(formData.avatarName);
   };
 
@@ -218,7 +308,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
         <button
           type="button"
           id="personaConfirmButton"
-          onClick={() => handleConfirm("chat-setting")}
+          onClick={handleSaveChatData}
         >
           Save
         </button>
@@ -245,7 +335,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
         <button
           type="button"
           id="apiKeyConfirmButton"
-          onClick={() => handleConfirm("chatgpt-key")}
+          onClick={handleChatGPTSetting}
         >
           Confirm
         </button>
@@ -312,38 +402,44 @@ const PopupManager: React.FC<PopupManagerProps> = ({
     </div>
   );
 
+  const handleRemoveFile = () => {
+    setFormData((prev) => ({ ...prev, uploadedFile: null }));
+  };
+
   const renderUploadAvatar = () => (
     <div id="dhsPopup" className="dhs-popup assitant-popup">
       <form id="dhsForm">
         <span id="dhsClose" className="dhs-close-button" onClick={onClose}>
           &times;
         </span>
-        <h3>Upload Your DHS File</h3>
-        <div
-          className="dhs-dropzone"
-          id="dhsDropzone"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            const file = e.dataTransfer.files[0];
-            setFormData((prev) => ({ ...prev, uploadedFile: file }));
-          }}
-        >
-          Drag and drop your DHS file here
-        </div>
-        <p
-          id="uploadStatus"
-          style={{
-            display: formData.uploadedFile ? "block" : "none",
-            color: "lightgreen",
-          }}
-        >
-          File uploaded successfully!
-        </p>
+        <h3 className="mb-4">Upload Your DHS File</h3>
+        {!formData.uploadedFile ? (
+          <div
+            className="dhs-dropzone"
+            id="dhsDropzone"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDHSFileDrop}
+          >
+            Drag and drop your DHS file here
+          </div>
+        ) : (
+          <div className="uploaded-file-container">
+            <div className="file-info">
+              <div className="flex items-center justify-between w-full p-3 bg-gray-800 rounded">
+                {formData.uploadedFile.name}
+                <FaTimes onClick={handleRemoveFile} />
+              </div>
+            </div>
+          </div>
+        )}
         <button
           type="button"
           id="dhsConfirmButton"
-          onClick={() => handleConfirm("upload-avatar")}
+          onClick={handleLoadUploadDHSTemplate}
+          className={`mt-4 ${
+            !formData.uploadedFile ? "opacity-50 pointer-events-none" : ""
+          }`}
+          disabled={!formData.uploadedFile}
         >
           Upload
         </button>
@@ -511,7 +607,8 @@ const PopupManager: React.FC<PopupManagerProps> = ({
             setIsPaying(false);
             setCardPaymentState({ errorMessage: "Payment successful!" });
             setShowCardElement(false);
-            showToast(
+            onShowToast(
+              "success",
               `Added ${amount} credits successfully. Please try to save avatar again! `
             );
             onClose();
@@ -520,7 +617,7 @@ const PopupManager: React.FC<PopupManagerProps> = ({
         }
       } catch (error) {
         console.error("Error in handleCreditPay:", error);
-        showToast("Failed to add credit");
+        onShowToast("error", "Failed to add credit");
         throw error;
       }
     };

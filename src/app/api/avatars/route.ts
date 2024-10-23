@@ -37,13 +37,13 @@ export async function POST(req: NextRequest) {
     }
     const { avatarName } = await req.json();
     const addAvatarQuery = "INSERT INTO Avatars (name, user_id) VALUES (?, ?)";
-    const result = await query<Avatar[]>(addAvatarQuery, [avatarName, userId]);
+    const result = await query<{ insertId: number }>(addAvatarQuery, [avatarName, userId]); 
 
     console.log(result);
 
     return NextResponse.json({ success: true, insertedId: result.insertId });
   } catch (error) {
-    console.error("Error fetching active plans:", error);
+    console.error("Error fetching avatars:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -26,6 +26,7 @@ interface ChatbotProps {
   selectedLanguage: string;
   onVoiceSelect: (lang: string) => void;
   selectedVoice: string;
+  onShowToast?: (type: string, message: string) => void;
 }
 
 interface ChatMessage {
@@ -33,7 +34,6 @@ interface ChatMessage {
   isUser: boolean;
   timestamp: Date;
 }
-
 
 const buttonLabels = [
   "Chat Setting",
@@ -51,7 +51,8 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
   selectedLanguage,
   onLanguageSelect,
   selectedVoice,
-  onVoiceSelect
+  onVoiceSelect,
+  onShowToast,
 }) => {
   const [selectedTab, setSelectedTab] = useState<string>("");
   const [showPopup, setShowPopup] = useState(false);
@@ -65,9 +66,13 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
       timestamp: new Date(),
     },
   ]);
+  const [logo, setLogo] = useState<string | null>(null);
 
   const chatboxRef = useRef<HTMLDivElement>(null);
   const recognition = useRef<any>(null);
+
+  const avatarId = localStorage.getItem("avatar_id");
+  const userId = localStorage.getItem("user_id");
 
   const { setMuted } = useAudioStore();
 
@@ -100,6 +105,31 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
       )}
     </div>
   );
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("No token found");
+        }
+        const response = await fetch(`/api/userchat?avatarId=${avatarId}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const { data, success } = await response.json();
+        if (success && data.logo) {
+          setLogo(data.logo);
+        }
+      } catch (error) {
+        console.error("Error fetching logo:", error);
+      }
+    };
+
+    fetchLogo();
+  }, [avatarId]);
 
   useEffect(() => {
     if (selectedMode === "conversation" || selectedMode === "preview") {
@@ -160,6 +190,44 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
       };
     }
   }, [selectedLanguage]);
+
+  const handleLogoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("logo", file);
+    formData.append("avatarId", avatarId);
+    formData.append("prompts", "");
+    formData.append("welcomeMessage", ""); 
+    
+    console.log(formData)
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No token found");
+      }
+      const response = await fetch(`/api/userchat`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const { success, logo } = await response.json();
+      if (success && logo) {
+        onShowToast("success", "Upload Logo Successfully !");
+        setLogo(logo)
+      }
+    } catch (error) {
+      onShowToast("error", "Failed to upload logo!");
+      console.error("Error uploading logo:", error);
+    }
+  };
 
   const handleUserMessage = useCallback(
     (message: string) => {
@@ -335,12 +403,32 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
 
   return (
     <div id="chatbot" className="block" tabIndex={0}>
-      <img
-        id="chatbotLogo"
-        src="/images/yourlogopng.png"
-        className="absolute top-0 left-0 m-16 w-40 h-40"
-        alt="Chatbot Logo"
-      />
+      <div className="logo-container absolute top-0 left-0 m-16 w-40 h-40">
+        <img
+          id="chatbotLogo"
+          src={logo ? `/uploads/${logo}` : "/images/yourlogopng.png"}
+          className="w-full h-full object-cover"
+          alt="Chatbot Logo"
+        />
+
+        {selectedMode === "conversation" && (
+          <label
+            htmlFor="logo-upload"
+            className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 hover:bg-opacity-50 transition-all duration-200 cursor-pointer group"
+          >
+            <span className="text-white opacity-0 group-hover:opacity-100">
+              Upload Logo
+            </span>
+            <input
+              id="logo-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              className="hidden"
+            />
+          </label>
+        )}
+      </div>
 
       {selectedMode === "conversation" && renderConversationMode()}
       {selectedMode === "preview" && renderPreviewMode()}
@@ -472,7 +560,7 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
           selectedLanguage={selectedLanguage}
           onVoiceSelect={onVoiceSelect}
           selectedVoice={selectedVoice}
-          recognition={recognition}
+          onShowToast={onShowToast}
         />
       )}
     </div>

@@ -7,7 +7,6 @@ export type Avatar = {
   slider_value: string;
   prompt: string;
   submission_time: string;
-  insertId?: number;
 }
 
 export type User = {

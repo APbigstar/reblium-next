@@ -12,8 +12,6 @@ import {
   FaSave,
   FaLock,
 } from "react-icons/fa";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 import { useWebRTCManager } from "@/lib/webrtcClient";
 import { useSelectedMenuItemStore } from "@/store/selectedMenuItem";
@@ -34,6 +32,7 @@ import { assetNames, backgroundAssets } from "../Constant";
 
 interface ArtistModeProps {
   selectedMode: string;
+  onShowToast?: (type: string, message: string) => void;
 }
 
 const useFullscreen = () => {
@@ -66,7 +65,7 @@ const useFullscreen = () => {
   return { isFullscreen, toggleFullscreen };
 };
 
-const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
+const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode, onShowToast }) => {
   const { credits, refetchUserData } = useContext(UserContext);
 
   const [activeMenu, setActiveMenu] = useState("generator");
@@ -329,10 +328,6 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
     setWardrobe("");
   };
 
-  const showToast = (message: string) => {
-    toast.success(message);
-  };
-
   return (
     <div className="artist_mode" id="artist_mode" tabIndex={0}>
       <div id="buttonsContainer" className="avatar-menu">
@@ -486,15 +481,9 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode }) => {
           onPayCredits={handlePayCreditAndSaveAvatar}
           onCreateAvatar={handleCreateAvatar}
           onSaveAvatar={handleAvatarSaveButtonClick}
-          showToast={showToast}
+          onShowToast={onShowToast}
         />
       )}
-
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-      />
     </div>
   );
 };

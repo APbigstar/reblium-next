@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef, useContext } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import { UserContext } from "@/provider/UserContext";
 import Stripe from "@/provider/Stripe";
@@ -125,6 +127,13 @@ const AvatarModeUIView = () => {
     return "Free";
   };
 
+  const showToast = (
+    type: "success" | "error" | "info" | "warning",
+    message: string
+  ) => {
+    toast[type](message);
+  };
+
   return (
     <>
       <Navbar />
@@ -164,11 +173,20 @@ const AvatarModeUIView = () => {
             selectedLanguage={selectedLanguage}
             onVoiceSelect={handleSelectedVoice}
             selectedVoice={selectedVoice}
+            onShowToast={showToast}
           />
         )}
         {selectedMode === "design" && isWebRTCInitialized && (
-          <ArtistModeComponent selectedMode={selectedMode} />
+          <ArtistModeComponent
+            selectedMode={selectedMode}
+            onShowToast={showToast}
+          />
         )}
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+        />
       </div>
     </>
   );
