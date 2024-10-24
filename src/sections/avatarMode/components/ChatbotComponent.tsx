@@ -16,7 +16,7 @@ import { useAudioStore } from "@/store/audioManager";
 
 import PopupManager from "./PopupManager";
 
-import { languageOptions } from "../Constant";
+import { languageOptions, voiceMappings } from "../Constant";
 
 interface ChatbotProps {
   isMuted: boolean;
@@ -315,6 +315,19 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
     }
   }, [selectedMode]);
 
+  const handleLanguageSelect = async (code: string, lang: string) => {
+    onLanguageSelect(code);
+
+    await handleSendCommands({
+      personas: `Change your language to this: ${lang}`,
+    });
+
+    if (selectedVoice) {
+      const voiceCode = voiceMappings[code][selectedVoice];
+      await handleSendCommands({ voiceid: voiceCode });
+    }
+  };
+
   const renderConversationMode = () => (
     <>
       <div id="buttonsContainer" className="avatar-menu">
@@ -381,7 +394,7 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
             className={`language-option cursor-pointer flex flex-col items-center justify-center p-1.5 ${
               selectedLanguage === language.code ? "selected" : ""
             }`}
-            onClick={() => onLanguageSelect(language.code)}
+            onClick={() => handleLanguageSelect(language.code, language.lang)}
           >
             <span
               className={`flag-icon flag-icon-${language.flagClass} text-2xl mb-1.5`}

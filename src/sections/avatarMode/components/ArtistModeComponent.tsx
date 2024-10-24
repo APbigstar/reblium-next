@@ -33,6 +33,8 @@ import { assetNames, backgroundAssets } from "../Constant";
 interface ArtistModeProps {
   selectedMode: string;
   onShowToast?: (type: string, message: string) => void;
+  isFirstLoad: boolean;
+  onInitialized: () => void;
 }
 
 const useFullscreen = () => {
@@ -68,6 +70,8 @@ const useFullscreen = () => {
 const ArtistModeComponent: React.FC<ArtistModeProps> = ({
   selectedMode,
   onShowToast,
+  isFirstLoad,
+  onInitialized,
 }) => {
   const { credits, refetchUserData } = useContext(UserContext);
 
@@ -228,23 +232,23 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({
     let initTimeout: NodeJS.Timeout;
 
     const initializeAvatar = async () => {
-      if (!isAvatarInitialized && isWebRTCConnected()) {
-        const createdMode = localStorage.getItem("create_mode");
+      if (isFirstLoad && isWebRTCConnected()) {
         onVideoReady(async () => {
           try {
             await new Promise((resolve) => setTimeout(resolve, 1500));
+
+            const createdMode = localStorage.getItem("create_mode");
 
             if (createdMode === "set") {
               await handleRandomizeClick();
             } else {
               await handleShowingCurrentAvatar();
             }
-            setIsAvatarInitialized(true);
+
+            onInitialized();
           } catch (error) {
             console.error("Error initializing avatar:", error);
-            initTimeout = setTimeout(() => {
-              setIsAvatarInitialized(false);
-            }, 3000);
+            onShowToast?.("error", "Failed to initialize avatar");
           }
         });
       }
@@ -257,13 +261,7 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({
         clearTimeout(initTimeout);
       }
     };
-  }, [
-    isAvatarInitialized,
-    isWebRTCConnected,
-    handleRandomizeClick,
-    handleShowingCurrentAvatar,
-    onVideoReady,
-  ]);
+  }, [isFirstLoad, isWebRTCConnected, onVideoReady, onInitialized]);
 
   const toggleMenu = (menu: string) => {
     setActiveMenu(menu);

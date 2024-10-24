@@ -39,6 +39,12 @@ const AvatarModeUIView = () => {
     useContext(UserContext);
   const { isMuted, setMuted } = useAudioStore();
 
+  const [state, setState] = useState({
+    isInitialized: false,
+    isWebRTCInitialized: false,
+    hasInitializedAvatar: false,
+  });
+
   const [selectedMode, setSelectedMode] = useState<string>("design");
   const [selectedLanguage, setSelectedLanguage] = useState("en-US");
   const [selectedVoice, setSelectedVoice] = useState("Samantha");
@@ -70,7 +76,7 @@ const AvatarModeUIView = () => {
           setIsLoading
         );
 
-        setIsWebRTCInitialized(true);
+        setState((prev) => ({ ...prev, isWebRTCInitialized: true }));
       } catch (error) {
         console.error("Failed to initialize WebRTC:", error);
         setError("Failed to connect to avatar service. Please try again.");
@@ -79,24 +85,35 @@ const AvatarModeUIView = () => {
       }
     };
 
-    initializeWebRTC();
+    if (!state.isInitialized) {
+      initializeWebRTC();
+      setState((prev) => ({ ...prev, isInitialized: true }));
+    }
 
     return () => {
       webRTCManager.cleanup();
     };
-  }, [router]);
+  }, [router, state.isInitialized]);
+
+  const handleModeChange = async (newMode: string) => {
+    if (selectedMode === newMode) return;
+
+    setSelectedMode(newMode);
+
+    if (newMode === "conversation" || newMode === "preview") {
+      setMuted(false);
+    }
+
+    if (newMode === "preview") {
+      await handleGetChattingData();
+    }
+  };
 
   useEffect(() => {
     if (selectedMode === "conversation" || selectedMode === "preview") {
       setMuted(false);
     }
   }, [selectedMode, setMuted]);
-
-  const handleMuteToggle = () => {
-    const newMutedState = !isMuted;
-    setMuted(newMutedState);
-    audioManager.toggleMute(newMutedState);
-  };
 
   const handleLanguageSelect = (lang: string) => {
     setSelectedLanguage(lang);
@@ -127,41 +144,38 @@ const AvatarModeUIView = () => {
     return "Free";
   };
 
+  const handleGetChattingData = async () => {
+    const avatarId = localStorage.getItem("avatar_id");
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No token found");
+    }
+
+    const response = await fetch(`/api/userchat?avatarId=${avatarId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const { data, success } = await response.json();
+
+    console.log(data, success, "++++++++++++++++++")
+
+    if (success) {
+      console.log("execute voice function");
+      await webRTCManager.handleSendCommands({
+        texttospeech: data.welcome_message,
+      });
+    }
+  };
+
   const showToast = (
     type: "success" | "error" | "info" | "warning",
     message: string
   ) => {
     toast[type](message);
   };
-
-  useEffect(() => {
-    const handleGetChattingData = async () => {
-      const avatarId = localStorage.getItem("avatar_id");
-      const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("No token found");
-      }
-
-      const response = await fetch(`/api/userchat?avatarId=${avatarId}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const { data, success } = await response.json();
-
-      if (success) {
-        console.log("execute voice function");
-        await webRTCManager.handleSendCommands({
-          personas: data.welcome_message,
-        });
-      }
-    };
-    if (selectedMode === "preview") {
-      handleGetChattingData();
-    }
-  }, [selectedMode]);
 
   return (
     <>
@@ -188,7 +202,7 @@ const AvatarModeUIView = () => {
           <WatermarkComponent />
         )}
         <VideoComponent
-          handleSelectedMenu={setSelectedMode}
+          handleSelectedMenu={handleModeChange}
           selectedMode={selectedMode}
           videoContainerRef={videoContainerRef}
           audioRef={audioRef}
@@ -197,7 +211,11 @@ const AvatarModeUIView = () => {
           <ChatbotComponent
             selectedMode={selectedMode}
             isMuted={isMuted}
-            onMuteToggle={handleMuteToggle}
+            onMuteToggle={() => {
+              const newMutedState = !isMuted;
+              setMuted(newMutedState);
+              audioManager.toggleMute(newMutedState);
+            }}
             onLanguageSelect={handleLanguageSelect}
             selectedLanguage={selectedLanguage}
             onVoiceSelect={handleSelectedVoice}
@@ -205,10 +223,12 @@ const AvatarModeUIView = () => {
             onShowToast={showToast}
           />
         )}
-        {selectedMode === "design" && isWebRTCInitialized && (
+        {selectedMode === "design" && state.isWebRTCInitialized && (
           <ArtistModeComponent
             selectedMode={selectedMode}
             onShowToast={showToast}
+            isFirstLoad={!state.hasInitializedAvatar}
+            onInitialized={() => setState(prev => ({ ...prev, hasInitializedAvatar: true }))}
           />
         )}
         <ToastContainer
