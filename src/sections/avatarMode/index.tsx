@@ -134,6 +134,35 @@ const AvatarModeUIView = () => {
     toast[type](message);
   };
 
+  useEffect(() => {
+    const handleGetChattingData = async () => {
+      const avatarId = localStorage.getItem("avatar_id");
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No token found");
+      }
+
+      const response = await fetch(`/api/userchat?avatarId=${avatarId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const { data, success } = await response.json();
+
+      if (success) {
+        console.log("execute voice function");
+        await webRTCManager.handleSendCommands({
+          personas: data.welcome_message,
+        });
+      }
+    };
+    if (selectedMode === "preview") {
+      handleGetChattingData();
+    }
+  }, [selectedMode]);
+
   return (
     <>
       <Navbar />

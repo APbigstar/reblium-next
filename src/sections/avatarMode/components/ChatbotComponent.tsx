@@ -132,12 +132,6 @@ const ChatbotComponent: React.FC<ChatbotProps> = ({
   }, [avatarId]);
 
   useEffect(() => {
-    if (selectedMode === "conversation" || selectedMode === "preview") {
-      setMuted(false);
-    }
-  }, [selectedMode, setMuted]);
-
-  useEffect(() => {
     if (lastBotMessage && !isProcessingMessage) {
       setMessages((prev) => [
         ...prev,

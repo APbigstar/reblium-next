@@ -213,8 +213,8 @@ const PopupManager: React.FC<PopupManagerProps> = ({
     }
   };
 
-  const handleChatGPTSetting = () => {
-    handleSendCommands({ gptapikey: formData.apiKey });
+  const handleChatGPTSetting = async () => {
+    await handleSendCommands({ gptapikey: formData.apiKey });
     onClose();
   };
 
@@ -230,28 +230,35 @@ const PopupManager: React.FC<PopupManagerProps> = ({
       });
   };
 
-  const handleLanguageSelect = (code: string, lang: string) => {
+  const handleLanguageSelect = async (code: string, lang: string) => {
     setFormData((prev) => ({ ...prev, selectedLanguage: code }));
     onLanguageSelect(code);
-    handleSendCommands({
-      personas: `Change your language to this: ${lang}`,
-    });
+    await handleGetChattingData()
+    if(formData.welcomeMessage) {
+      await handleSendCommands({
+        personas: `Change your language to this: ${lang} and use persona: ${formData.welcomeMessage}`,
+      });
+    } else {
+      await handleSendCommands({
+        personas: `Change your language to this: ${lang}`,
+      });
+    }
 
     if (selectedVoice) {
       const voiceCode = voiceMappings[code][selectedVoice];
-      handleSendCommands({ voiceid: voiceCode });
+      await handleSendCommands({ voiceid: voiceCode });
     }
 
     onClose();
   };
 
-  const handleVoiceSelect = (voice: string) => {
+  const handleVoiceSelect = async (voice: string) => {
     setFormData((prev) => ({ ...prev, selectedVoice: voice }));
     onVoiceSelect(voice);
 
     if (selectedLanguage) {
       const voiceCode = voiceMappings[selectedLanguage][voice];
-      handleSendCommands({ voiceid: voiceCode });
+      await handleSendCommands({ voiceid: voiceCode });
     }
 
     onClose();

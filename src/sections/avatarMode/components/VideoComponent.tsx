@@ -16,6 +16,26 @@ const VideoComponent: React.FC<VideoComponentProps> = ({
   audioRef,
 }) => {
   useEffect(() => {
+    const preventMouseEvents = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    // Function to add event listeners to video element
+    const addVideoEventListeners = (video: HTMLVideoElement) => {
+      // Prevent all mouse events
+      video.addEventListener("mousedown", preventMouseEvents);
+      video.addEventListener("mouseup", preventMouseEvents);
+      video.addEventListener("click", preventMouseEvents);
+      video.addEventListener("dblclick", preventMouseEvents);
+
+      // Prevent selection
+      video.style.userSelect = "none";
+      video.style.webkitUserSelect = "none";
+      // Prevent pointer events while maintaining video visibility
+      video.style.pointerEvents = "none";
+    };
+
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === "childList") {
@@ -26,10 +46,18 @@ const VideoComponent: React.FC<VideoComponentProps> = ({
             Array.from(videos)
               .slice(0, -1)
               .forEach((video) => {
+                video.removeEventListener("mousedown", preventMouseEvents);
+                video.removeEventListener("mouseup", preventMouseEvents);
+                video.removeEventListener("click", preventMouseEvents);
+                video.removeEventListener("dblclick", preventMouseEvents);
                 video.pause();
                 video.srcObject = null;
                 video.remove();
               });
+          }
+          const currentVideo = videos[videos.length - 1];
+          if (currentVideo) {
+            addVideoEventListeners(currentVideo);
           }
         }
       });
@@ -40,10 +68,25 @@ const VideoComponent: React.FC<VideoComponentProps> = ({
         childList: true,
         subtree: true,
       });
+      const existingVideo = videoContainerRef.current.querySelector("video");
+      if (existingVideo) {
+        addVideoEventListeners(existingVideo);
+      }
     }
 
     return () => {
       observer.disconnect();
+      const videos = videoContainerRef.current?.getElementsByTagName("video");
+      if (videos) {
+        if (videos) {
+          Array.from(videos).forEach((video) => {
+            video.removeEventListener("mousedown", preventMouseEvents);
+            video.removeEventListener("mouseup", preventMouseEvents);
+            video.removeEventListener("click", preventMouseEvents);
+            video.removeEventListener("dblclick", preventMouseEvents);
+          });
+        }
+      }
     };
   }, [videoContainerRef]);
 
