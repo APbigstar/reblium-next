@@ -20,14 +20,18 @@ class WebRTCManager {
   private webRTCClient: WebRTCClient | null = null;
   private selectedCommand: string | null = null;
   private videoLoaded = false;
+  private connectionEstablished = false;
   private videoLoadedResolver: (() => void) | null = null;
+  private connectionResolver: (() => void) | null = null;
   private videoLoadedPromise: Promise<void>;
+  private connectionPromise: Promise<void>;
   private lastResponse: string | null = null;
   private latestLoadAvatarCommand: string | null = null;
   private options: WebRTCClientOptions | null = null;
   private videoElement: HTMLVideoElement | null = null;
   private audioRef: HTMLAudioElement | null = null;
   private onVideoReadyCallbacks: (() => void)[] = [];
+  private commandQueue: Command[] = [];
   public defaultAvatarPrompt = false;
   private connectionAttempts = 0;
   private maxConnectionAttempts = 3;
@@ -36,12 +40,15 @@ class WebRTCManager {
   private isProcessingAIMessage: boolean = false;
 
   private constructor() {
-    this.resetVideoLoadedPromise();
+    this.resetPromises();
   }
 
-  private resetVideoLoadedPromise() {
+  private resetPromises() {
     this.videoLoadedPromise = new Promise((resolve) => {
       this.videoLoadedResolver = resolve;
+    });
+    this.connectionPromise = new Promise((resolve) => {
+      this.connectionResolver = resolve;
     });
   }
 
@@ -60,6 +67,8 @@ class WebRTCManager {
 
     while (Date.now() - startTime < maxWaitTime) {
       if (this.isWebRTCConnected()) {
+        this.connectionEstablished = true;
+        this.connectionResolver?.();
         return;
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -83,14 +92,12 @@ class WebRTCManager {
 
       if (this.webRTCClient) {
         try {
-          // Stop all media tracks
           if (this.videoElement && this.videoElement.srcObject) {
             const stream = this.videoElement.srcObject as MediaStream;
             stream.getTracks().forEach((track) => track.stop());
             this.videoElement.srcObject = null;
           }
 
-          // Close any existing connections
           const client = this.webRTCClient as any;
           if (client.peer) {
             client.peer.close();
@@ -99,9 +106,9 @@ class WebRTCManager {
             client.socket.close();
           }
 
-          // Reset all state
           this.webRTCClient = null;
           this.videoLoaded = false;
+          this.connectionEstablished = false;
           this.videoElement = null;
           this.audioRef = null;
           this.options = null;
@@ -109,7 +116,8 @@ class WebRTCManager {
           this.selectedCommand = null;
           this.latestLoadAvatarCommand = null;
           this.connectionAttempts = 0;
-          this.resetVideoLoadedPromise();
+          this.commandQueue = [];
+          this.resetPromises();
           this.onVideoReadyCallbacks = [];
         } catch (error) {
           console.error("Error during WebRTC cleanup:", error);
@@ -119,8 +127,9 @@ class WebRTCManager {
       setTimeout(resolve, 500);
     });
   }
+
   public onVideoReady(callback: () => void): void {
-    if (this.videoLoaded) {
+    if (this.videoLoaded && this.connectionEstablished) {
       callback();
     } else {
       this.onVideoReadyCallbacks.push(callback);
@@ -157,6 +166,17 @@ class WebRTCManager {
     console.log("Received response:", response);
   }
 
+  private async initConnection(): Promise<void> {
+    try {
+      await this.waitForConnection();
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Additional delay for stability
+      await this.processCommandQueue();
+    } catch (error) {
+      console.error("Error in initConnection:", error);
+      throw error;
+    }
+  }
+
   public async initializeWebRTC(
     sizeContainerRef: RefObject<HTMLElement>,
     videoContainerRef: RefObject<HTMLElement>,
@@ -167,8 +187,6 @@ class WebRTCManager {
     this.updateLoadingState(true);
 
     try {
-      // Cleanup existing connection
-      await this.cleanup();
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       this.assertElementsExist(sizeContainerRef, videoContainerRef, audioRef);
@@ -182,7 +200,9 @@ class WebRTCManager {
 
       this.webRTCClient = new WebRTCClient(this.options);
       this.setupVideoDetection(videoContainerRef);
-      await this.waitForConnection(), await this.videoLoadedPromise;
+
+      // Wait for both video and connection
+      await Promise.all([this.videoLoadedPromise, this.initConnection()]);
 
       this.updateLoadingState(false);
     } catch (error) {
@@ -269,9 +289,6 @@ class WebRTCManager {
       if (!this.videoLoaded) {
         this.videoLoaded = true;
         this.videoLoadedResolver?.();
-        this.handleSendCommands({ cameraswitch: "head" });
-
-        // Execute all callbacks waiting for video ready
         this.onVideoReadyCallbacks.forEach((callback) => callback());
         this.onVideoReadyCallbacks = []; // Clear the callbacks
       }
@@ -312,22 +329,58 @@ class WebRTCManager {
     }
   }
 
-  public async handleSendCommands(command: Command): Promise<boolean> {
-    await this.videoLoadedPromise;
-    this.selectedCommand = Object.keys(command)[0];
+  private async processCommandQueue() {
+    while (this.commandQueue.length > 0) {
+      const command = this.commandQueue.shift();
+      if (command) {
+        try {
+          await this.sendCommand(command);
+          // Add a small delay between commands
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        } catch (error) {
+          console.error("Error processing command from queue:", error);
+          // Put the command back in the queue
+          this.commandQueue.unshift(command);
+          break;
+        }
+      }
+    }
+  }
+
+  private async sendCommand(command: Command): Promise<void> {
+    if (!this.webRTCClient || !this.connectionEstablished) {
+      throw new Error("WebRTC not ready");
+    }
 
     try {
-      if ('usermessege' in command) {
+      if ("usermessege" in command) {
         this.isProcessingAIMessage = false;
       }
       if ("resetavatar" in command) {
         this.latestLoadAvatarCommand = command.resetavatar;
       }
-      this.webRTCClient?.emitUIInteraction(command);
+      this.selectedCommand = Object.keys(command)[0];
+      await this.webRTCClient.emitUIInteraction(command);
       console.log("Command sent successfully:", command);
-      return true;
     } catch (error) {
       console.error("Error sending command:", error);
+      throw error;
+    }
+  }
+
+  public async handleSendCommands(command: Command): Promise<boolean> {
+    try {
+      // Wait for both video and connection to be ready
+      await Promise.all([this.videoLoadedPromise, this.connectionPromise]);
+
+      // Add command to queue
+      this.commandQueue.push(command);
+
+      // Process queue
+      await this.processCommandQueue();
+      return true;
+    } catch (error) {
+      console.error("Error in handleSendCommands:", error);
       return false;
     }
   }

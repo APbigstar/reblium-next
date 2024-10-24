@@ -65,7 +65,10 @@ const useFullscreen = () => {
   return { isFullscreen, toggleFullscreen };
 };
 
-const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode, onShowToast }) => {
+const ArtistModeComponent: React.FC<ArtistModeProps> = ({
+  selectedMode,
+  onShowToast,
+}) => {
   const { credits, refetchUserData } = useContext(UserContext);
 
   const [activeMenu, setActiveMenu] = useState("generator");
@@ -74,15 +77,13 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode, onShowTo
   const [isCollapse, setIsCollapse] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [popupType, setPopupType] = useState<PopupType>("");
+  const [isAvatarInitialized, setIsAvatarInitialized] = useState(false);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
 
   const {
-    loadAndSendAvatarData,
     handleSendCommands,
     handleResetButtonClick,
     isWebRTCConnected,
-    getLastResponse,
-    getSelectedCommand,
     onVideoReady,
   } = useWebRTCManager();
 
@@ -112,71 +113,71 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode, onShowTo
     { key: "wardrobe", component: WardrobeSubMenu },
   ];
 
-  useEffect(() => {
-    const createdMode = localStorage.getItem("create_mode");
-
-    onVideoReady(() => {
-      console.log("Video is ready, executing initial commands");
-      if (createdMode === "set") {
-        handleRandomizeClick();
-      } else {
-        handleShowingCurrentAvatar();
+  const handleShowingCurrentAvatar = useCallback(async () => {
+    try {
+      const avatarId = localStorage.getItem("avatar_id");
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No token found");
       }
-    });
-  }, []);
 
-  const handleShowingCurrentAvatar = async () => {
-    const avatarId = localStorage.getItem("avatar_id");
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("No token found");
+      const response = await fetch(`/api/avatars/getAvatar?id=${avatarId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const { data, success } = await response.json();
+
+      if (success && data.avatar) {
+        await handleSendCommands({ cameraswitch: "head" });
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        await handleSendCommands({ resetavatar: JSON.stringify(data.avatar) });
+        console.log("Avatar data sent successfully");
+      }
+    } catch (error) {
+      console.error("Error showing current avatar:", error);
+    }
+  }, [handleSendCommands]);
+
+  const handleRandomizeClick = useCallback(async () => {
+    if (!isWebRTCConnected()) {
+      console.log("WebRTC not connected, waiting...");
+      return;
     }
 
-    const response = await fetch(`/api/avatars/getAvatar?id=${avatarId}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+      // Small delay before sending randomize commands
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const { data, success } = await response.json();
+      const gender = {
+        Male: true,
+        Female: true,
+      };
+      const ethnicities = {
+        "East Asian": false,
+        "Latino/ Hispanic": false,
+        "South Asian/ Indian": false,
+        "Middle Eastern": false,
+        "European/ Caucasian": false,
+        "Indigenous/ Native American": false,
+        "African/ Caribbean": false,
+      };
+      const groomingOptions = {
+        Hairshort: true,
+        Tattoo: true,
+        Hairmedium: true,
+        Beard: true,
+        Hairlong: true,
+        Mustache: true,
+        Haircolor: true,
+        Eyescolor: true,
+        Scene: false,
+        Look: false,
+      };
+      const randomAge = Math.floor(Math.random() * 100) + 1;
 
-    if (success) {
-      handleSendCommands({ resetavatar: JSON.stringify(data.avatar) });
-    }
-
-    console.log(data, success);
-  };
-
-  const handleRandomizeClick = () => {
-    const gender = {
-      Male: true,
-      Female: true,
-    };
-    const ethnicities = {
-      "East Asian": false,
-      "Latino/ Hispanic": false,
-      "South Asian/ Indian": false,
-      "Middle Eastern": false,
-      "European/ Caucasian": false,
-      "Indigenous/ Native American": false,
-      "African/ Caribbean": false,
-    };
-    const groomingOptions = {
-      Hairshort: true,
-      Tattoo: true,
-      Hairmedium: true,
-      Beard: true,
-      Hairlong: true,
-      Mustache: true,
-      Haircolor: true,
-      Eyescolor: true,
-      Scene: false,
-      Look: false,
-    };
-    const randomAge = Math.floor(Math.random() * 100) + 1;
-
-    if (isWebRTCConnected) {
       const randomGender = Object.keys(gender).reduce((acc, key) => {
         acc[key] = Math.random() < 0.5;
         return acc;
@@ -204,42 +205,91 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode, onShowTo
       const ageRange = `Agemin*${randomAge}, Agemax*${randomAge}`;
       const result = [...checkboxValues, ageRange].join(", ");
 
-      handleSendCommands({ randomize: result });
-      handleSendCommands({ assetname: "Studio_makeUp" });
+      await handleSendCommands({ cameraswitch: "head" });
+
+      await handleSendCommands({ randomize: result });
+      // Small delay between commands
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await handleSendCommands({ assetname: "Studio_makeUp" });
 
       const randomBackgroundIndex = Math.floor(
         Math.random() * backgroundAssets.length
       );
       const selectedBackground = backgroundAssets[randomBackgroundIndex];
-      handleSendCommands({ assetname: selectedBackground });
+      // Small delay before setting background
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await handleSendCommands({ assetname: selectedBackground });
+    } catch (error) {
+      console.error("Error during randomize:", error);
     }
-  };
+  }, [isWebRTCConnected, handleSendCommands]);
+
+  useEffect(() => {
+    let initTimeout: NodeJS.Timeout;
+
+    const initializeAvatar = async () => {
+      if (!isAvatarInitialized && isWebRTCConnected()) {
+        const createdMode = localStorage.getItem("create_mode");
+        onVideoReady(async () => {
+          try {
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+
+            if (createdMode === "set") {
+              await handleRandomizeClick();
+            } else {
+              await handleShowingCurrentAvatar();
+            }
+            setIsAvatarInitialized(true);
+          } catch (error) {
+            console.error("Error initializing avatar:", error);
+            initTimeout = setTimeout(() => {
+              setIsAvatarInitialized(false);
+            }, 3000);
+          }
+        });
+      }
+    };
+
+    initializeAvatar();
+
+    return () => {
+      if (initTimeout) {
+        clearTimeout(initTimeout);
+      }
+    };
+  }, [
+    isAvatarInitialized,
+    isWebRTCConnected,
+    handleRandomizeClick,
+    handleShowingCurrentAvatar,
+    onVideoReady,
+  ]);
 
   const toggleMenu = (menu: string) => {
     setActiveMenu(menu);
   };
 
-  const toggleAutoCamera = useCallback(() => {
+  const toggleAutoCamera = useCallback(async () => {
     setIsAutoCamera((prevState) => !prevState);
-    handleSendCommands({ autocamera: isAutoCamera ? "No" : "Yes" });
+    await handleSendCommands({ autocamera: isAutoCamera ? "No" : "Yes" });
     console.log("Auto camera toggled:", !isAutoCamera ? "Unlocked" : "Locked");
   }, [isAutoCamera]);
 
-  const toggleAssetName = () => {
+  const toggleAssetName = async () => {
     let currentAssetIndex = 0;
     currentAssetIndex = (currentAssetIndex + 1) % assetNames.length;
     const newAssetName = assetNames[currentAssetIndex];
-    handleSendCommands({ assetname: newAssetName });
+    await handleSendCommands({ assetname: newAssetName });
   };
 
-  const handleSaveAvatar = () => {
+  const handleSaveAvatar = async () => {
     const createMode = localStorage.getItem("create_mode");
     const avatarId = localStorage.getItem("avatar_id");
 
     if (createMode === "set") {
       handleOpenPopup("save-avatar");
     } else {
-      handleSendCommands({ saveavatar: avatarId });
+      await handleSendCommands({ saveavatar: avatarId });
     }
   };
 
@@ -263,7 +313,7 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode, onShowTo
     const { insertedId, success } = await response.json();
 
     if (success) {
-      handleSendCommands({ saveavatar: insertedId });
+      await handleSendCommands({ saveavatar: insertedId });
       handleClosePopup();
     }
   };
@@ -400,10 +450,10 @@ const ArtistModeComponent: React.FC<ArtistModeProps> = ({ selectedMode, onShowTo
           value={lightValue}
           className="slider"
           id="lightSliderInput"
-          onChange={(e) => {
+          onChange={async (e) => {
             const value = parseFloat(e.target.value);
             setLightValue(value);
-            handleSendCommands({ slidertype: `LightDirection*${value}` });
+            await handleSendCommands({ slidertype: `LightDirection*${value}` });
           }}
         />
       </div>
